@@ -12,7 +12,7 @@ $Global:StartOSDCloud = [ordered]@{
     WindowsUpdate = [bool]$true
     WindowsUpdateDrivers = [bool]$true
     SetTimeZone = [bool]$true
-    ClearDiskConfirm = [bool]$false
+    ClearDiskConfirm = [bool]$true
 }
 
 get-variable startosdcloud -valueonly
