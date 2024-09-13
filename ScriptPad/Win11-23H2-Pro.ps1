@@ -11,7 +11,7 @@ $Global:MyOSDCloud = [ordered]@{
     ZTI = [bool]$true
 }
 
-Get-Variable StartOSDCloud -ValueOnly
+Get-Variable MyOSDCloud -ValueOnly
 Start-Sleep -Seconds 5
 
 Write-Host -ForegroundColor Green “Starting OSDCloud”
