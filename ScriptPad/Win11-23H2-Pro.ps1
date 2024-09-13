@@ -22,14 +22,8 @@ $Global:MyOSDCloud = [ordered]@{
 #Write-Host -ForegroundColor Green “Starting OSDCloud ZTI”
 #Start-Sleep -Seconds 5
 
-#Make sure I have the latest OSD Content
-#Write-Host -ForegroundColor Green “Updating OSD PowerShell Module”
-#Install-Module OSD -Force -SkipPublisherCheck
-
 Write-Host -ForegroundColor Green “Importing OSD PowerShell Module”
 Import-Module OSD -Force
 
-#Start OSDCloud ZTI the RIGHT way
 Write-Host -ForegroundColor Green “Start OSDCloud”
-#Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
-Start-OSDCloudGUI
+Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
