@@ -7,7 +7,7 @@ $OSLanguage = 'en-us'
 #Set OSDCloud Vars
 Write-Host -ForegroundColor Green “Setting variables”
 $Global:StartOSDCloud = [ordered]@{
-    Restart = [bool]$true
+    Restart = [bool]$false
     RecoveryPartition = [bool]$true
     WindowsUpdate = [bool]$true
     WindowsUpdateDrivers = [bool]$true
