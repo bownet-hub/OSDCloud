@@ -5,7 +5,7 @@ $OSActivation = 'Retail'
 $OSLanguage = 'en-us'
 
 #Set OSDCloud Vars
-$Global:MyOSDCloud = [ordered]@{
+$Global:StartOSDCloud = [ordered]@{
     #Restart = [bool]$False
     RecoveryPartition = [bool]$true
     #OEMActivation = [bool]$True
