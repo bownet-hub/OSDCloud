@@ -5,7 +5,7 @@ $OSActivation = 'Retail'
 $OSLanguage = 'en-us'
 
 #Set OSDCloud Vars
-Write-Host -ForegroundColor Green “Starting OSDCloud ZTI”
+Write-Host -ForegroundColor Green “Setting variables”
 $Global:StartOSDCloud = [ordered]@{
     Restart = [bool]$true
     RecoveryPartition = [bool]$true
@@ -16,12 +16,7 @@ $Global:StartOSDCloud = [ordered]@{
 }
 
 get-variable startosdcloud -valueonly
+Start-Sleep -Seconds 5
 
-#Write-Host -ForegroundColor Green “Starting OSDCloud ZTI”
-#Start-Sleep -Seconds 5
-
-Write-Host -ForegroundColor Green “Importing OSD PowerShell Module”
-#Import-Module OSD -Force
-
-Write-Host -ForegroundColor Green “Start OSDCloud”
-#Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
+Write-Host -ForegroundColor Green “Starting OSDCloud”
+Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
