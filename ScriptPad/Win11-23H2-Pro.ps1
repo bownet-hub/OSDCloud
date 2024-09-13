@@ -16,6 +16,3 @@ Start-Sleep -Seconds 5
 
 Write-Host -ForegroundColor Green “Starting OSDCloud”
 Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
-
-Write-Host -ForegroundColor Green “Restarting computer”
-Restart-Computer
