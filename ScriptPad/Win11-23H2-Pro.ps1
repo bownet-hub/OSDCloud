@@ -6,7 +6,7 @@ $OSLanguage = 'en-us'
 
 #Set OSDCloud Vars
 Write-Host -ForegroundColor Green “Setting variables”
-$Global:StartOSDCloud = [ordered]@{
+$Global:MyOSDCloud = [ordered]@{
     Restart = [bool]$true
     ZTI = [bool]$true
 }
@@ -15,6 +15,7 @@ Get-Variable StartOSDCloud -ValueOnly
 Start-Sleep -Seconds 5
 
 Write-Host -ForegroundColor Green “Starting OSDCloud”
-Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage -ZTI
+Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
 
+Write-Host -ForegroundColor Green “Restarting computer”
 Restart-Computer
