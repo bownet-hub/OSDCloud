@@ -20,4 +20,4 @@ Start-Sleep -Seconds 10
 
 Write-Host -ForegroundColor Green “Starting OSDCloud”
 #Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
-Start-OSDCloud
+Start-OSDCloud -ZTI
