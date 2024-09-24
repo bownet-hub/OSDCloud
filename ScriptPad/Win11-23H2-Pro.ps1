@@ -12,7 +12,7 @@ $Global:MyOSDCloud = [ordered]@{
 }
 
 Get-Variable MyOSDCloud -ValueOnly
-Start-Sleep -Seconds 5
+Start-Sleep -Seconds 10
 
 Write-Host -ForegroundColor Green “Starting OSDCloud”
-Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
+#Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
