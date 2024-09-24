@@ -1,8 +1,8 @@
 #Variables to define the Windows OS / Edition etc to be applied during OSDCloud
-$OSName = 'Windows 11 23H2 x64'
-$OSEdition = 'Pro'
-$OSActivation = 'Retail'
-$OSLanguage = 'en-us'
+#$OSName = 'Windows 11 23H2 x64'
+#$OSEdition = 'Pro'
+#$OSActivation = 'Retail'
+#$OSLanguage = 'en-us'
 
 #Set OSDCloud Vars
 Write-Host -ForegroundColor Green “Setting variables”
