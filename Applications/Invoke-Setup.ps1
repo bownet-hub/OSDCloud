@@ -18,7 +18,7 @@ Function Invoke-Setup {
 
     #Add other applications and install parameters
     #RingCentral
-    if ($AppName -eq "RingCentral") {
+    if ($AppName -like "*RingCentral*") {
         if ($Invoke -eq "Install") {
             Write-Host "Installing $AppName"
 
@@ -44,7 +44,7 @@ Function Invoke-Setup {
     }
 
     #WatchGuard SSL VPN
-    elseif ($AppName -eq "Watchguard") {
+    elseif ($AppName -like "*Watchguard*") {
         if ($Invoke -eq "Install") {
             Write-Host "Installing $AppName"
 
