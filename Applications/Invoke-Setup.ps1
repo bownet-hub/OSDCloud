@@ -110,7 +110,7 @@ If (!(Test-Path "$Installer")) {
 
 #Remove the Installer
 
-If ($null -ne $InstallerPath -and ($null -ne $InstallerPath)) {
+If ($null -ne $InstallerPath) {
     If (Test-Path "$InstallerPath") {
         Start-Sleep -Seconds 2
         Write-Host "Delete installer"
