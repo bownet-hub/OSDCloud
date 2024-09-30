@@ -26,7 +26,7 @@ If ($AppName -eq "RingCentral") {
         Write-Host "Installing $AppName"
 
         $InstallerPath = "$DefaultPath\$AppName.msi"
-        $Installer = "msiexec.exe"
+        $Installer = "C:\Windows\System32\msiexec.exe"
 
         $url = "https://downloads.ringcentral.com/sp/RingCentralForWindows"
         Write-Host "URL to download the installer: $url"
