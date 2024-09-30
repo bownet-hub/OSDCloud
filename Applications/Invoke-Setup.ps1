@@ -123,6 +123,8 @@ Write-Host "$(Get-Date -Format $dtFormat)"
 Function Uninstall
 {
 Write-Host "Uninstall using $Installer $Arguments"
+Write-Host "Stop any of the applications that may be running"
+Get-Process | Where-Object {$_.Company -like "*$AppName*" -or $_.Path -like "*$AppName*"} | Stop-Process -ErrorAction Ignore -Force
 If (!(Test-Path "$Installer")) {
     Write-Host "File does not exist"
 } elseif (Test-Path "$Installer") {
