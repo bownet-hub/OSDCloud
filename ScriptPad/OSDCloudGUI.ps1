@@ -1,2 +1,2 @@
 Write-Host -ForegroundColor Green “Starting OSDCloud”
-Start-OSDCloudGUI
+Start-OSDCloudGUI -BrandName "Out of the Box Solution"
