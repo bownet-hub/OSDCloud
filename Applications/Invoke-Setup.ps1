@@ -16,8 +16,6 @@ Function Invoke-Setup {
     $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
     Write-Host "$(Get-Date -Format $dtFormat)"
 
-    Write-Host "Defining variables for $AppName"
-
     #Add other applications and install parameters
     #RingCentral
     if ($AppName -eq "RingCentral") {
@@ -50,7 +48,7 @@ Function Invoke-Setup {
         if ($Invoke -eq "Install") {
             Write-Host "Installing $AppName"
 
-            $Installer = ".\WG-MVPN-SSL.exe"
+            $Installer = Get-ChildItem -Path ".\" -Recurse -File -Include "*.exe"
             Write-Host "Use included installer $Installer"
 
             $Arguments = @(
@@ -58,15 +56,18 @@ Function Invoke-Setup {
                 "/VERYSILENT"
             )
 
-            $CertFile = ".\OpenVPN.cer"
-            if (!(Test-Path "$CertFile")) { 
-                Write-Host "Certificate not present"
+            $CertFile = Get-ChildItem -Path ".\" -Recurse -File -Include "*.cer"
+            if ($null -ne $CertFile) {
+                if (Test-Path "$CertFile") { 
+                    Write-Host "Install included certificate"
+                    Import-Certificate -FilePath $CertFile -CertStoreLocation Cert:\LocalMachine\TrustedPublisher
+
+                    Install
+                }
             }
             else {
-                Write-Host "Install included certificate"
-                Import-Certificate -FilePath $CertFile -CertStoreLocation Cert:\LocalMachine\TrustedPublisher
-
-                Install
+                
+                Write-Host "Certificate not present"
             }
         }
         elseif ($Invoke -eq "Uninstall") {
@@ -96,13 +97,16 @@ Function Install {
             exit
         }
     }
-    if (!(Test-Path "$Installer")) { 
-        Write-Host "Installer not present"
+
+    if ($null -ne $Installer) {
+        if (Test-Path "$Installer") { 
+            Write-Host "Starting install using $Installer $Arguments"
+            Start-Process "$Installer" -ArgumentList $Arguments -Wait
+            Write-Host "Software install finished"
+        }
     }
     else {
-        Write-Host "Starting install using $Installer $Arguments"
-        Start-Process "$Installer" -ArgumentList $Arguments -Wait
-        Write-Host "Software install finished" 
+        Write-Host "Installer not found"
     }
 
     #Remove the Installer
