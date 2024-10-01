@@ -94,7 +94,7 @@ Function Install {
         Invoke-WebRequest -Uri $url -OutFile "$InstallerPath" -UseBasicParsing -Verbose
         if (!(Test-Path "$InstallerPath")) {
             Write-Host "Did not download, Exit Script"
-            exit
+            exit 1
         }
     }
 
