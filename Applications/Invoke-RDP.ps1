@@ -1,6 +1,6 @@
 # Include RDP file downloaded from RDWeb, and optional icon file
 # If icon is not included, system icon will be used
-# Files need to be in root of IntuneWin
+# Files can be in the root or a subfolder when packaged to IntuneWin
 # If RDPName parameter is not specified, "RemoteApp" will be used
 # Ability to install or uninstall with Invoke parameter
 
@@ -35,28 +35,29 @@ Function Invoke-RDP {
 
 
 Function Install-RDP {
-    If (!(Test-Path "$TargetDir")) {
-        Write-Host "Create directory if it doesn't exist $TargetDir"
-        New-Item -ItemType Directory -Path $TargetDir -Force
+    $RDPFile = Get-ChildItem -Path ".\" -Recurse -File -Include "*.rdp"
+    If ($null -ne $RDPFile) {
+        If (!(Test-Path "$TargetDir")) {
+            Write-Host "Create directory if it doesn't exist $TargetDir"
+            New-Item -ItemType Directory -Path $TargetDir -Force
+        }
+        Write-Host "Create RemoteApp from included RDP file $TargetDir\$RDPName.rdp"
+        Get-Content "$RDPFile" -Raw | Out-File "$TargetDir\$RDPName.rdp"
     }
-
-    If (!(Test-Path ".\*.rdp")) {
+    Else {
         Write-Host "No RDP file present. Exiting"
         Exit
     }
-    Else {
-        Write-Host "Create RemoteApp from included RDP file $TargetDir\$RDPName.rdp"
-        $RDPFile = Get-Content ".\*.rdp" -Raw | Out-File "$TargetDir\$RDPName.rdp"
-    }
 
-    If (!(Test-Path ".\*.ico")) {
-        Write-Host "No icon file present. Using system default"
-        $IconFile = "%systemroot%\system32\mstscax.dll, 0"
-    }
-    Else {
+    $IncludedIcon = Get-ChildItem -Path ".\" -Recurse -File -Include "*.ico"
+    If ($null -ne $IncludedIcon) {
         $IconFile = "$TargetDir\$RDPName.ico"
         Write-Host "Copy icon $RDPName.ico to $IconFile"
-        Copy-Item ".\*.ico" "$IconFile"
+        Copy-Item "$IncludedIcon" "$IconFile"
+    }
+    Else {
+        Write-Host "No icon file present. Using system default"
+        $IconFile = "%systemroot%\system32\mstscax.dll, 0"
     }
 
     Write-Host "Create Desktop shortcut" 
