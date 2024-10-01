@@ -3769,5 +3769,3 @@ if ($PSCommandPath -like '*.ps1' -and $PSCommandPath -like "*$($MyInvocation.MyC
         Write-Debug "Script Name $LabTechFunction.ps1 does not match a defined function for this module."
     }
 }
-
-Get-LTServiceInfo
