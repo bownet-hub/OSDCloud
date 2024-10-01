@@ -15,7 +15,7 @@ Function Invoke-Ninite {
 
     Start-Transcript -Path C:\ProgramData\Intune\Ninite.txt -Append
 
-    $PSScriptRoot = "C:\ProgramData\Intune\Ninite"
+    $PSScriptRoot = "C:\ProgramData\Intune"
     Write-Host "Download location $PSScriptRoot"
 
     $AppArray = $AppList.Split(",")
