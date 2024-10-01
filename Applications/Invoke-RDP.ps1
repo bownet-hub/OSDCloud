@@ -46,7 +46,7 @@ Function Install-RDP {
     }
     Else {
         Write-Host "No RDP file present. Exiting"
-        Exit
+        Exit 1
     }
 
     $IncludedIcon = Get-ChildItem -Path ".\" -Recurse -File -Include "*.ico"
