@@ -8,7 +8,7 @@ Function Invoke-Setup {
         [ValidateSet("Install", "Uninstall")]
         [string]$Invoke = 'Install')
 
-    $DefaultPath = "C:\ProgramData\Intune"
+    $DefaultPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs"
     $LogPath = "$DefaultPath\$AppName.txt"
 
     #Start logging
