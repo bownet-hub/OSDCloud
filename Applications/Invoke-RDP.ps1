@@ -17,7 +17,8 @@ Function Invoke-RDP {
     $ShortcutPath = "C:\Users\Public\Desktop\$RDPName.lnk"
     $TargetPath = "$TargetDir\$RDPName.rdp"
 
-    Start-Transcript -Path "C:\ProgramData\Intune\$RDPName.txt" -Append
+    $DefaultPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs"
+    Start-Transcript -Path "$DefaultPath\$RDPName.txt" -Append
     $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
     Write-Host "$(Get-Date -Format $dtFormat)"
 
