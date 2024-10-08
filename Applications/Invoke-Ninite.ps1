@@ -14,7 +14,12 @@ Function Invoke-Ninite {
         [string]$Invoke = 'Install')
 
     $DefaultPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs"
-    Start-Transcript -Path "$DefaultPath\Ninite.txt" -Append
+    $LogPath = "$DefaultPath\Ninite.txt"
+
+    #Start logging
+    Start-Transcript -Path "$LogPath" -Append
+    $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
+    Write-Host "$(Get-Date -Format $dtFormat)"
 
     $PSScriptRoot = "C:\ProgramData\Intune"
     Write-Host "Download location $PSScriptRoot"
