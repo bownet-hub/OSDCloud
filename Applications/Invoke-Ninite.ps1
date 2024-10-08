@@ -13,7 +13,8 @@ Function Invoke-Ninite {
         [ValidateSet("Install", "Uninstall")]
         [string]$Invoke = 'Install')
 
-    Start-Transcript -Path C:\ProgramData\Intune\Ninite.txt -Append
+    $DefaultPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs"
+    Start-Transcript -Path "$DefaultPath\Ninite.txt" -Append
 
     $PSScriptRoot = "C:\ProgramData\Intune"
     Write-Host "Download location $PSScriptRoot"
