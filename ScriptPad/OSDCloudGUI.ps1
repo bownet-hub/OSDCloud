@@ -2,7 +2,9 @@
 $Global:OSDCloud_Defaults = [ordered]@{
     BrandName             = "Out of the Box Solutions"
     BrandColor            = "Blue"
+    OSActivation          = "Retail"
     OSActivationValues    = "Retail"
+    OSEdition             = "Pro"
     OSEditionValues       = "Pro"
     OSLanguageValues      = "en-us"
     captureScreenshots    = $false
