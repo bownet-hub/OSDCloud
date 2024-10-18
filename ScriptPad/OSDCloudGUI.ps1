@@ -1,22 +1,28 @@
 # Set OSDCloudGUI Defaults
 $Global:OSDCloud_Defaults = [ordered]@{
-    BrandName            = "Out of the Box Solutions"
-    BrandColor           = "Blue"
-    OSActivation         = "Retail"
-    OSEdition            = "Pro"
-    OSLanguage           = "en-us"
-    OSImageIndex         = 9
-    OSName               = "Windows 11 24H2 x64"
-    OSReleaseID          = "24H2"
-    OSVersion            = "Windows 11"
-    captureScreenshots   = $false
-    ClearDiskConfirm     = $false
-    restartComputer      = $true
-    updateDiskDrivers    = $false
-    updateFirmware       = $false
-    updateNetworkDrivers = $false
-    updateSCSIDrivers    = $false
+    BrandName                = "Out of the Box Solutions"
+    BrandColor               = "Blue"
+    OSActivation             = "Retail"
+    OSEdition                = "Pro"
+    OSLanguage               = "en-us"
+    OSImageIndex             = 9
+    OSName                   = "Windows 11 24H2 x64"
+    OSReleaseID              = "24H2"
+    OSVersion                = "Windows 11"
+    captureScreenshots       = $false
+    ClearDiskConfirm         = $false
+    restartComputer          = $true
+    updateDiskDrivers        = $false
+    updateFirmware           = $false
+    updateNetworkDrivers     = $false
+    updateSCSIDrivers        = $false
+    WindowsUpdate            = $true
+    WindowsUpdateDrivers     = $false
+    WindowsDefenderUpdate    = $false
+    SyncMSUpCatDriverUSB     = $true
 }
+
+Write-Output $Global:OSDCloud_Defaults
 
 # Create 'Start-OSDCloudGUI.json' - During WinPE SystemDrive will be 'X:'
 $OSDCloudGUIjson = New-Item -Path "$($env:SystemDrive)\OSDCloud\Automate\Start-OSDCloudGUI.json" -Force
