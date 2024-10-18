@@ -9,10 +9,12 @@ Write-Host -ForegroundColor Green “Setting variables”
 $Global:MyOSDCloud = [ordered]@{
     OSName = 'Windows 11 24H2 x64'
     OSEdition = 'Pro'
-    OSActivation = 'Retail'
+    OEMActivation = 'Retail'
     OSLanguage = 'en-us'
+    WindowsUpdate = [bool]$true
+    WindowsDefenderUpdate = [bool]$false
+    ClearDiskConfirm = [bool]$false
     Restart = [bool]$true
-    ZTI = [bool]$true
     }
 
 Get-Variable MyOSDCloud -ValueOnly
