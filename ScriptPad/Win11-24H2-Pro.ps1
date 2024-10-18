@@ -9,6 +9,7 @@ Write-Host -ForegroundColor Green “Setting variables”
 $Global:MyOSDCloud = [ordered]@{
     WindowsUpdate = [bool]$true
     WindowsDefenderUpdate = [bool]$false
+    SyncMSUpCatDriverUSB = [bool]$true
     ClearDiskConfirm = [bool]$false
     Restart = [bool]$true
     }
