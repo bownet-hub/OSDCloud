@@ -1,21 +1,21 @@
 # Set OSDCloudGUI Defaults
 $Global:OSDCloud_Defaults = [ordered]@{
-    BrandName                = "Out of the Box Solutions"
-    BrandColor               = "Blue"
-    OSActivation             = "Retail"
-    OSEdition                = "Pro"
-    OSLanguage               = "en-us"
-    captureScreenshots       = $false
-    ClearDiskConfirm         = $false
-    restartComputer          = $true
-    updateDiskDrivers        = $false
-    updateFirmware           = $false
-    updateNetworkDrivers     = $false
-    updateSCSIDrivers        = $false
-    WindowsUpdate            = $true
-    WindowsUpdateDrivers     = $false
-    WindowsDefenderUpdate    = $false
-    SyncMSUpCatDriverUSB     = $true
+    BrandName             = "Out of the Box Solutions"
+    BrandColor            = "Blue"
+    OSActivationValues    = "Retail"
+    OSEditionValues       = "Pro"
+    OSLanguageValues      = "en-us"
+    captureScreenshots    = $false
+    ClearDiskConfirm      = $false
+    restartComputer       = $true
+    updateDiskDrivers     = $false
+    updateFirmware        = $false
+    updateNetworkDrivers  = $false
+    updateSCSIDrivers     = $false
+    WindowsUpdate         = $true
+    WindowsUpdateDrivers  = $false
+    WindowsDefenderUpdate = $false
+    SyncMSUpCatDriverUSB  = $true
 }
 
 Write-Output $Global:OSDCloud_Defaults
