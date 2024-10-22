@@ -14,11 +14,11 @@ $Global:OSDCloud_Defaults = [ordered]@{
     updateFirmware        = $false
     updateNetworkDrivers  = $false
     updateSCSIDrivers     = $false
-    WindowsUpdate         = $true
     WindowsUpdateDrivers  = $false
     WindowsDefenderUpdate = $false
     SyncMSUpCatDriverUSB  = $true
 }
+#     WindowsUpdate         = $true
 
 Write-Output $Global:OSDCloud_Defaults
 
