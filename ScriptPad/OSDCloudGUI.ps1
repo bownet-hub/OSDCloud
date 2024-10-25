@@ -21,8 +21,9 @@
 #    WindowsUpdateDrivers  = $false
 #    WindowsDefenderUpdate = $false
 #    SyncMSUpCatDriverUSB  = $true
-#}
 #     WindowsUpdate         = $true
+#}
+
 
 # Set OSDCloudGUI Defaults
 $Global:OSDCloud_Defaults = [ordered]@{
@@ -40,6 +41,9 @@ $Global:OSDCloud_Defaults = [ordered]@{
     )
     OSLanguageValues      = @(
         "en-us"
+    )
+    OSVersionValues       = @(
+        "Windows 11"
     )
     captureScreenshots    = $false
     ClearDiskConfirm      = $false
