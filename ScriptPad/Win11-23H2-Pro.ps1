@@ -7,10 +7,6 @@ $OSLanguage = 'en-us'
 #Set OSDCloud Vars
 Write-Host -ForegroundColor Green “Setting variables”
 $Global:MyOSDCloud = [ordered]@{
-    OSName = 'Windows 11 23H2 x64'
-    OSEdition = 'Pro'
-    OSActivation = 'Retail'
-    OSLanguage = 'en-us'
     Restart = [bool]$true
     ZTI = [bool]$true
     }
