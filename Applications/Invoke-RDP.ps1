@@ -16,6 +16,7 @@ Function Invoke-RDP {
     $TargetDir = "C:\Program Files (x86)\RemoteApp"
     $ShortcutPath = "C:\Users\Public\Desktop\$RDPName.lnk"
     $TargetPath = "$TargetDir\$RDPName.rdp"
+    $StartMenuPath = "C:\ProgramData\Microsoft\Windows\Start Menu\Programs"
 
     $DefaultPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs"
     $LogPath = "$DefaultPath\$RDPName.txt"
@@ -69,6 +70,9 @@ Function Install-RDP {
     $Shortcut.TargetPath = $TargetPath
     $Shortcut.IconLocation = $IconFile
     $Shortcut.Save()
+
+    Write-Host "Copy shortcut to Start Menu"
+    Copy-Item $ShortcutPath $StartMenuPath
 }
 
 
