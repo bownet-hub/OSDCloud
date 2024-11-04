@@ -19,7 +19,7 @@ Function Invoke-RDP {
     $StartMenuPath = "C:\ProgramData\Microsoft\Windows\Start Menu\Programs"
 
     $DefaultPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs"
-    $LogPath = "$DefaultPath\$RDPName.txt"
+    $LogPath = "$DefaultPath\$RDPName.log"
 
     #Start logging
     Start-Transcript -Path "$LogPath" -Append
