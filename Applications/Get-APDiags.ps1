@@ -4,10 +4,11 @@ param(
     [Parameter(Mandatory = $False)] [Switch] $Online,
     [Parameter(Mandatory = $False)] [Switch] $AllSessions,
     [Parameter(Mandatory = $False)] [Switch] $ShowPolicies,
-    [Parameter(Mandatory = $false)] [string]$Tenant,
-    [Parameter(Mandatory = $false)] [string]$AppId,
-    [Parameter(Mandatory = $false)] [string]$AppSecret
+    [Parameter(Mandatory = $False)] [String] $Tenant,
+    [Parameter(Mandatory = $False)] [String] $AppId,
+    [Parameter(Mandatory = $False)] [String] $AppSecret
 )
+
 $RegistryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Autopilot\EnrollmentStatusTracking"
 $RegistryWatcher = New-Object System.Management.ManagementEventWatcher
 $RegistryWatcher.Query = New-Object System.Management.WqlEventQuery("__InstanceModificationEvent", "TargetInstance isa 'RegistryKey' and TargetInstance.Name = '$RegistryKey'")
