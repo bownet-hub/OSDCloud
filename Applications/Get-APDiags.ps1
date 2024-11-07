@@ -22,7 +22,7 @@ $action = {
 }
 
 # Register the event to monitor the registry key
-Register-WmiEvent -Query "SELECT * FROM RegistryKeyChangeEvent WHERE Hive='HKEY_LOCAL_MACHINE' AND KeyPath='SOFTWARE\\Microsoft\\Windows\\Autopilot\\EnrollmentStatusTracking\\ESPTrackingInfo\\Diagnostics\\ExpectedMSIAppPackages'" -Action $action
+Register-WmiEvent -Query "SELECT * FROM RegistryTreeChangeEvent WHERE Hive='HKEY_LOCAL_MACHINE' AND KeyPath='SOFTWARE\\Microsoft\\Windows\\Autopilot\\EnrollmentStatusTracking\\ESPTrackingInfo\\Diagnostics\\ExpectedMSIAppPackages'" -Action $action
 
 # Keep the script running to monitor changes
 while ($true) {
