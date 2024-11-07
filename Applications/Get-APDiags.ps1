@@ -9,6 +9,8 @@ param(
     [Parameter(Mandatory = $False)] [String] $AppSecret
 )
 
+Get-AutopilotDiagnosticsCommunity.ps1 @PSBoundParameters
+
 # Define the registry path to monitor
 $registryPath = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Autopilot\EnrollmentStatusTracking\ESPTrackingInfo\Diagnostics\ExpectedMSIAppPackages"
 
