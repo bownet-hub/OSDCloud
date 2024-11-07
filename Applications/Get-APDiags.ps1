@@ -9,7 +9,7 @@ param(
     [Parameter(Mandatory = $False)] [String] $AppSecret
 )
 
-$RegistryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Autopilot\EnrollmentStatusTracking"
+$RegistryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Autopilot\EnrollmentStatusTracking\ESPTrackingInfo\Diagnostics\ExpectedMSIAppPackages"
 $RegistryWatcher = New-Object System.Management.ManagementEventWatcher
 $RegistryWatcher.Query = New-Object System.Management.WqlEventQuery("__InstanceModificationEvent", "TargetInstance isa 'RegistryKey' and TargetInstance.Name = '$RegistryKey'")
 
