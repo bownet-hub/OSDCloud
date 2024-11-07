@@ -24,6 +24,6 @@ Register-WmiEvent -Query "SELECT * FROM RegistryKeyChangeEvent WHERE Hive='HKEY_
 
 # Keep the script running to monitor changes
 while ($true) {
-    Start-Sleep -Seconds 10
+    Start-Sleep -Seconds 1
 }
 
