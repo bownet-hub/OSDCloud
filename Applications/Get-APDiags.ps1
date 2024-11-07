@@ -9,19 +9,21 @@ param(
     [Parameter(Mandatory = $False)] [String] $AppSecret
 )
 
-# Registry Key to monitor
-$RegistryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Autopilot\EnrollmentStatusTracking\ESPTrackingInfo\Diagnostics\ExpectedMSIAppPackages"
-$RegistryWatcher = New-Object System.Management.ManagementEventWatcher
-$RegistryWatcher.Query = New-Object System.Management.WqlEventQuery("__InstanceModificationEvent", "TargetInstance isa 'RegistryKey' and TargetInstance.Name = '$RegistryKey'")
+# Define the registry path to monitor
+$registryPath = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Autopilot\EnrollmentStatusTracking\ESPTrackingInfo\Diagnostics\ExpectedMSIAppPackages"
 
-# Run script when change is detected
-Register-ObjectEvent $RegistryWatcher -Action {
-    Write-Host "Registry change detected at $(Get-Date)"
-    Write-Host "Key Path: $($Event.SourceEventArgs.NewEvent.TargetInstance.Name)"
+# Define the action to take when a change occurs
+$action = {
+    param($event)
+    # Run the script with the provided parameters
     Get-AutopilotDiagnosticsCommunity.ps1 @PSBoundParameters
 }
 
+# Register the event to monitor the registry key
+Register-WmiEvent -Query "SELECT * FROM RegistryKeyChangeEvent WHERE Hive='HKEY_LOCAL_MACHINE' AND KeyPath='SOFTWARE\\Microsoft\\Windows\\Autopilot\\EnrollmentStatusTracking\\ESPTrackingInfo\\Diagnostics\\ExpectedMSIAppPackages'" -Action $action
+
 # Keep the script running to monitor changes
 while ($true) {
-    Start-Sleep -Seconds 1
+    Start-Sleep -Seconds 10
 }
+
