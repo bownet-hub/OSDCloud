@@ -21,8 +21,8 @@ Function Invoke-Ninite {
     $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
     Write-Host "$(Get-Date -Format $dtFormat)"
 
-    $PSScriptRoot = "C:\ProgramData\Intune"
-    Write-Host "Download location $PSScriptRoot"
+    $scriptDir = "C:\ProgramData\Intune"
+    Write-Host "Download location $scriptDir"
 
     $AppArray = $AppList.Split(",")
 
@@ -86,17 +86,17 @@ Function Invoke-Ninite {
 
         if ($Invoke -eq "Install") {
             #Download the Ninite file
-            Write-Host "Downloading to $PSScriptRoot"
-            Invoke-WebRequest -Uri $downloadlink -OutFile $PSScriptRoot\NiniteInstaller.exe -UseBasicParsing -Verbose
+            Write-Host "Downloading to $scriptDir"
+            Invoke-WebRequest -Uri $downloadlink -OutFile $scriptDir\NiniteInstaller.exe -UseBasicParsing -Verbose
 
 
-            if (!(test-path $PSScriptRoot\NiniteInstaller.exe)) {
+            if (!(test-path $scriptDir\NiniteInstaller.exe)) {
                 Write-Host "Did not download, Exit Script"
                 exit 1
             }
 
             #Launch the Ninite installer
-            start-process -FilePath "$PSScriptRoot\NiniteInstaller.exe"
+            start-process -FilePath "$scriptDir\NiniteInstaller.exe"
             $Y = 1
             While (!(Get-WmiObject win32_process -Filter { Name =  'Ninite.exe' }) -and $Y -lt 10) {
                 Write-Output "Waiting for ninite.exe to download and launch"
@@ -138,10 +138,10 @@ Function Invoke-Ninite {
 
 
         #Remove the Ninite Installer
-        if (test-path $PSScriptRoot\NiniteInstaller.exe) {
+        if (test-path $scriptDir\NiniteInstaller.exe) {
             start-sleep -Seconds 2
             Write-Host "Delete Ninite Installer"
-            Remove-Item "$PSScriptRoot\NiniteInstaller.exe"
+            Remove-Item "$scriptDir\NiniteInstaller.exe"
         }
 
 
