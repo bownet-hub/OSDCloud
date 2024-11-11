@@ -10,13 +10,12 @@ param(
     [Parameter(Mandatory = $false)] [string] $AppSecret
 )
 
-$DefaultPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs"
-$LogPath = "$DefaultPath\AutoPilotDiagnostics.log"
+$LogFile = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutoPilotDiagnostics.log"
 
-#Start logging
-Start-Transcript -Path "$LogPath" -Append
-$dtFormat = 'dd-MMM-yyyy HH:mm:ss'
-Write-Host "$(Get-Date -Format $dtFormat)"
+#Create file if doesn't exist
+if (!(Test-Path $LogFile)) {
+    New-Item -ItemType File -Path $LogFile -Force | Out-Null
+}
 
 # Autopilot registry key to monitor
 # New keys are created when each application installation is complete
@@ -26,7 +25,7 @@ $RegistryKey = "HKLM:\SOFTWARE\Microsoft\Windows\Autopilot\EnrollmentStatusTrack
 $InitialSubkeys = Get-ChildItem $RegistryKey | Select-Object -ExpandProperty PSChildName
 
 # Run script initially
-Get-AutoPilotDiagnosticsCommunity.ps1 @PSBoundParameters | Out-File -FilePath $LogPath -Append
+Get-AutoPilotDiagnosticsCommunity.ps1 @PSBoundParameters | Out-File -FilePath $LogFile -Append
 
 while ($true) {
     # Get current subkeys
@@ -37,7 +36,7 @@ while ($true) {
 
     # Registry keys are added after each application install completes
     if ($NewSubkeys) {
-        Get-AutoPilotDiagnosticsCommunity.ps1 @PSBoundParameters | Out-File -FilePath $LogPath -Append
+        Get-AutoPilotDiagnosticsCommunity.ps1 @PSBoundParameters | Out-File -FilePath $LogFile -Append
     }
 
     # Update initial snapshot
@@ -46,6 +45,3 @@ while ($true) {
     # Sleep for a specified interval (in seconds)
     Start-Sleep -Seconds 5
 }
-
-Write-Host "$(Get-Date -Format $dtFormat)"
-Stop-Transcript
