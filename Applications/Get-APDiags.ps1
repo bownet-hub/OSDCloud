@@ -10,6 +10,14 @@ param(
     [Parameter(Mandatory = $false)] [string] $AppSecret
 )
 
+$DefaultPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs"
+$LogPath = "$DefaultPath\AutoPilotDiagnostics.log"
+
+#Start logging
+Start-Transcript -Path "$LogPath" -Append
+$dtFormat = 'dd-MMM-yyyy HH:mm:ss'
+Write-Host "$(Get-Date -Format $dtFormat)"
+
 # Autopilot registry key to monitor
 # New keys are created when each application installation is complete
 $RegistryKey = "HKLM:\SOFTWARE\Microsoft\Windows\Autopilot\EnrollmentStatusTracking\ESPTrackingInfo\Diagnostics\ExpectedMSIAppPackages"
@@ -38,3 +46,5 @@ while ($true) {
     # Sleep for a specified interval (in seconds)
     Start-Sleep -Seconds 5
 }
+
+Stop-Transcript
