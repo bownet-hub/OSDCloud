@@ -17,8 +17,9 @@ Start-Transcript -Path "$LogFile" -Append
 $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
 Write-Host "$(Get-Date -Format $dtFormat)"
 
-# Get OSD log file properties to use for measuring total elapsed time
+# Get log file properties to use for measuring elapsed time
 $fileStart = Get-ChildItem -Path "C:\OSDCloud\Logs" -Filter *Deploy-OSDCloud.log
+$fileAP = Get-ChildItem $LogFile
 
 # Autopilot registry key to monitor
 # New keys are created when each application installation is complete
@@ -42,8 +43,8 @@ while ($true) {
         Get-AutoPilotDiagnosticsCommunity.ps1 @PSBoundParameters
 
         # Compare creation time of AutoPilot Diagnostics log to current time
-        $APTimeSpan = New-TimeSpan -Start $LogFile.CreationTime.ToUniversalTime() -End (Get-Date).ToUniversalTime()
-        Write-Host "Time in Autopilot $($FullTimeSpan.ToString("hh' hours 'mm' minutes 'ss' seconds'"))"
+        $APTimeSpan = New-TimeSpan -Start $fileAP.CreationTime.ToUniversalTime() -End (Get-Date).ToUniversalTime()
+        Write-Host "Time in Autopilot $($APTimeSpan.ToString("hh' hours 'mm' minutes 'ss' seconds'"))"
         
         # Compare creation time of OSD log to current time
         $FullTimeSpan = New-TimeSpan -Start $fileStart.CreationTime.ToUniversalTime() -End (Get-Date).ToUniversalTime()
