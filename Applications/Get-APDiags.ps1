@@ -23,7 +23,7 @@ $fileAP = Get-ChildItem $LogFile
 
 # Autopilot registry key to monitor
 # New keys are created when each application installation is complete
-$RegistryKey = "HKLM:\SOFTWARE\Microsoft\Windows\Autopilot\EnrollmentStatusTracking\ESPTrackingInfo\Diagnostics\ExpectedMSIAppPackages"
+$RegistryKey = "HKLM:\SOFTWARE\Microsoft\Windows\Autopilot\EnrollmentStatusTracking\ESPTrackingInfo\Diagnostics\Sidecar"
 
 # Get initial snapshot of subkeys
 $InitialSubkeys = Get-ChildItem $RegistryKey | Select-Object -ExpandProperty PSChildName
