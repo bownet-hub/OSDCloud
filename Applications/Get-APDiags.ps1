@@ -17,6 +17,9 @@ $RegistryKey = "HKLM:\SOFTWARE\Microsoft\Windows\Autopilot\EnrollmentStatusTrack
 # Get initial snapshot of subkeys
 $InitialSubkeys = Get-ChildItem $RegistryKey | Select-Object -ExpandProperty PSChildName
 
+# Run script initially
+Get-AutoPilotDiagnosticsCommunity.ps1 @PSBoundParameters
+
 while ($true) {
     # Get current subkeys
     $CurrentSubkeys = Get-ChildItem $RegistryKey | Select-Object -ExpandProperty PSChildName
@@ -24,8 +27,8 @@ while ($true) {
     # Compare and find new subkeys
     $NewSubkeys = Compare-Object -ReferenceObject $InitialSubkeys -DifferenceObject $CurrentSubkeys -PassThru
 
+    # Registry keys are added after each application install completes
     if ($NewSubkeys) {
-        Write-Host "New subkey(s) created:"
         Get-AutoPilotDiagnosticsCommunity.ps1 @PSBoundParameters
     }
 
