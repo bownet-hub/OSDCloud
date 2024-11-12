@@ -19,11 +19,16 @@ Write-Host "$(Get-Date -Format $dtFormat)"
 
 # Get log file properties to use for measuring elapsed time
 $fileStart = Get-ChildItem -Path "C:\OSDCloud\Logs" -Filter *Deploy-OSDCloud.log
-$fileAP = Get-ChildItem $LogFile
+$fileAP = Get-ChildItem -Path "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\IntuneManagementExtension.log"
 
 # Autopilot registry key to monitor
 # New keys are created when each application installation is complete
 $RegistryKey = "HKLM:\SOFTWARE\Microsoft\Windows\Autopilot\EnrollmentStatusTracking\ESPTrackingInfo\Diagnostics\Sidecar"
+
+# Check if the registry key exists
+if (-not (Test-Path $RegistryKey)) {
+    New-Item -Path $RegistryKey -Force
+}
 
 # Get initial snapshot of subkeys
 $InitialSubkeys = Get-ChildItem $RegistryKey | Select-Object -ExpandProperty PSChildName
