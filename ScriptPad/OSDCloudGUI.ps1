@@ -29,7 +29,6 @@ $Global:OSDCloud_Defaults = [ordered]@{
     WindowsDefenderUpdate = $false
     SyncMSUpCatDriverUSB  = $true
     WindowsUpdate         = $true
-    SetTimeZone           = $true
 }
 
 Write-Output $Global:OSDCloud_Defaults
