@@ -47,7 +47,8 @@ while ($true) {
         Write-Host "Time in Autopilot $($APTimeSpan.ToString("hh' hours 'mm' minutes 'ss' seconds'"))"
         
         # Compare creation time of OSD log to current time
-        $FullTimeSpan = New-TimeSpan -Start $fileStart.CreationTime.ToUniversalTime() -End (Get-Date).ToUniversalTime()
+        # Adjust current time by 3 hours to match creation time
+        $FullTimeSpan = New-TimeSpan -Start $fileStart.CreationTime.ToUniversalTime() -End (Get-Date).ToUniversalTime().AddHours(3)
         Write-Host "Total provisioning time $($FullTimeSpan.ToString("hh' hours 'mm' minutes 'ss' seconds'"))"
     }
 
