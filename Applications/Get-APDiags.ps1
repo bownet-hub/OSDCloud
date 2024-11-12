@@ -30,11 +30,11 @@ if (-not (Test-Path $RegistryKey)) {
     New-Item -Path $RegistryKey -Force
 }
 
-# Get initial snapshot of subkeys
-$InitialSubkeys = Get-ChildItem $RegistryKey | Select-Object -ExpandProperty PSChildName
-
 # Run script initially
 Get-AutoPilotDiagnosticsCommunity.ps1 @PSBoundParameters
+
+# Get initial snapshot of subkeys
+$InitialSubkeys = Get-ChildItem $RegistryKey | Select-Object -ExpandProperty PSChildName
 
 while ($true) {
     # Get current subkeys
