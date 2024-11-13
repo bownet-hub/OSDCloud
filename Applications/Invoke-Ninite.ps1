@@ -11,145 +11,157 @@ Function Invoke-Ninite {
 
         [Parameter(Position = 2, HelpMessage = "Install or Uninstall")]
         [ValidateSet("Install", "Uninstall")]
-        [string]$Invoke = 'Install')
+        [string]$Invoke = 'Install'
+    )
 
     $DefaultPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs"
     $LogPath = "$DefaultPath\Ninite.txt"
 
-    #Start logging
+    # Start logging
     Start-Transcript -Path "$LogPath" -Append
     $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
-    Write-Host "$(Get-Date -Format $dtFormat)"
+    Write-Host "$(Get-Date -Format $dtFormat) [INFO] Script started"
 
     $scriptDir = "C:\ProgramData\Intune"
-    Write-Host "Download location $scriptDir"
+    Write-Host "$(Get-Date -Format $dtFormat) [INFO] Download location $scriptDir"
 
     $AppArray = $AppList.Split(",")
 
     Foreach ($NiniteApp in $AppArray) {
+        Write-Host "$(Get-Date -Format $dtFormat) [INFO] Processing application: $NiniteApp"
 
-        Write-Host $NiniteApp
-
-        #Timeout if things are taking too long, odds are good something was too quick for process to monitor, so this is here to make sure it doesn't hang.  3 Minute Timeout, unless the app specifies otherwise.
+        # Timeout if things are taking too long
         $AppTimeout = "180"
 
-        #Set information per app to be used later
-        #Download and process info
+        # Set information per app to be used later
+        $downloadlink = ""
+        $uninstallstring = ""
 
-        if ($NiniteApp -eq "AH") {
-            $downloadlink = "https://ninite.com/7zip-chrome-firefox-greenshot-vlc/"
-            $AppTimeout = "300"
-        }
-
-        if ($NiniteApp -eq "VEN") {
-            $downloadlink = "https://ninite.com/chrome-cutepdf/"
-            $AppTimeout = "300"
-        }
-
-        if ($NiniteApp -eq "CutePDF") {
-            $downloadlink = "https://ninite.com/cutepdf/ninite.exe"
-            $AppTimeout = "300"
-        }
-        if ($NiniteApp -eq "7Zip") {
-            $downloadlink = "https://ninite.com/7Zip/ninite.exe"
-            $uninstallstring = '"C:\Program Files\7-Zip\Uninstall.exe" /S'
-            $AppTimeout = "300"
-        }
-        if ($NiniteApp -eq "Chrome") {
-            $downloadlink = "https://ninite.com/chrome/ninite.exe"
-            $uninstallstring = "wmic product where name=""Google Chrome"" call uninstall"
-        }
-        if ($NiniteApp -eq "FileZilla") {
-            $downloadlink = "https://ninite.com/FileZilla/ninite.exe"
-        }
-        if ($NiniteApp -eq "Firefox") {
-            $downloadlink = "https://ninite.com/FireFox/ninite.exe"
-            $uninstallstring = '"C:\Program Files\Mozilla Firefox\uninstall\helper.exe" /S'
-        }
-        if ($NiniteApp -eq "GreenShot") {
-            $downloadlink = "https://ninite.com/GreenShot/ninite.exe"
-            $uninstallstring = '"c:\windows\system32\taskkill.exe" /IM greenshot* /F & "C:\Program Files\Greenshot\unins000.exe" /SILENT'
-        }
-        if ($NiniteApp -eq "VLC") {
-            $downloadlink = "https://ninite.com/VLC/ninite.exe"
-            $uninstallstring = '"C:\Program Files\VideoLAN\VLC\uninstall.exe" /S /NCRC'
-        }
-        if ($NiniteApp -eq "VSCode") {
-            $downloadlink = "https://ninite.com/VSCode/ninite.exe"
-            $uninstallstring = '"C:\Program Files\Microsoft VS Code\unins000.exe" /SILENT'
-        }
-        if ($NiniteApp -eq "WinDirStat") {
-            $downloadlink = "https://ninite.com/WinDirStat/ninite.exe"
-            $uninstallstring = '"C:\Program Files (x86)\WinDirStat\Uninstall.exe" /S'
-            $AppTimeout = "300"
+        switch ($NiniteApp) {
+            "7Zip" {
+                $downloadlink = "https://ninite.com/7Zip/ninite.exe"
+                $uninstallstring = '"C:\Program Files\7-Zip\Uninstall.exe" /S'
+                $AppTimeout = "300"
+            }
+            "Chrome" {
+                $downloadlink = "https://ninite.com/chrome/ninite.exe"
+                $uninstallstring = "wmic product where name='Google Chrome' call uninstall"
+            }
+            "FileZilla" {
+                $downloadlink = "https://ninite.com/FileZilla/ninite.exe"
+                $uninstallstring = '"C:\Program Files (x86)\FileZilla FTP Client\uninstall.exe" /S'
+            }
+            "Firefox" {
+                $downloadlink = "https://ninite.com/FireFox/ninite.exe"
+                $uninstallstring = '"C:\Program Files\Mozilla Firefox\uninstall\helper.exe" /S'
+            }
+            "GreenShot" {
+                $downloadlink = "https://ninite.com/GreenShot/ninite.exe"
+                $uninstallstring = '"c:\windows\system32\taskkill.exe" /IM greenshot* /F & "C:\Program Files\Greenshot\unins000.exe" /SILENT'
+            }
+            "VLC" {
+                $downloadlink = "https://ninite.com/VLC/ninite.exe"
+                $uninstallstring = '"C:\Program Files\VideoLAN\VLC\uninstall.exe" /S /NCRC'
+            }
+            "VSCode" {
+                $downloadlink = "https://ninite.com/VSCode/ninite.exe"
+                $uninstallstring = '"C:\Program Files\Microsoft VS Code\unins000.exe" /SILENT'
+            }
+            "WinDirStat" {
+                $downloadlink = "https://ninite.com/WinDirStat/ninite.exe"
+                $uninstallstring = '"C:\Program Files (x86)\WinDirStat\Uninstall.exe" /S'
+                $AppTimeout = "300"
+            }
+            default {
+                Write-Host "$(Get-Date -Format $dtFormat) [ERROR] Unknown application: $NiniteApp"
+                continue
+            }
         }
 
         if ($Invoke -eq "Install") {
-            #Download the Ninite file
-            Write-Host "Downloading to $scriptDir"
-            Invoke-WebRequest -Uri $downloadlink -OutFile $scriptDir\NiniteInstaller.exe -UseBasicParsing -Verbose
-
-
-            if (!(test-path $scriptDir\NiniteInstaller.exe)) {
-                Write-Host "Did not download, Exit Script"
+            # Download the Ninite file
+            Write-Host "$(Get-Date -Format $dtFormat) [INFO] Downloading $NiniteApp to $scriptDir"
+            try {
+                Invoke-WebRequest -Uri $downloadlink -OutFile "$scriptDir\NiniteInstaller.exe" -UseBasicParsing -Verbose
+            } catch {
+                Write-Host "$(Get-Date -Format $dtFormat) [ERROR] Failed to download $NiniteApp: $_"
                 exit 1
             }
 
-            #Launch the Ninite installer
-            start-process -FilePath "$scriptDir\NiniteInstaller.exe"
+            if (!(Test-Path "$scriptDir\NiniteInstaller.exe")) {
+                Write-Host "$(Get-Date -Format $dtFormat) [ERROR] $NiniteApp did not download, exiting script"
+                exit 1
+            }
+
+            # Launch the Ninite installer
+            Write-Host "$(Get-Date -Format $dtFormat) [INFO] Launching Ninite installer for $NiniteApp"
+            try {
+                Start-Process -FilePath "$scriptDir\NiniteInstaller.exe"
+            } catch {
+                Write-Host "$(Get-Date -Format $dtFormat) [ERROR] Failed to start Ninite installer for $NiniteApp: $_"
+                exit 1
+            }
+
             $Y = 1
-            While (!(Get-WmiObject win32_process -Filter { Name =  'Ninite.exe' }) -and $Y -lt 10) {
-                Write-Output "Waiting for ninite.exe to download and launch"
+            While (!(Get-WmiObject win32_process -Filter { Name = 'Ninite.exe' }) -and $Y -lt 10) {
+                Write-Host "$(Get-Date -Format $dtFormat) [INFO] Waiting for Ninite.exe to download and launch"
                 Start-Sleep -Seconds 1
                 $Y++
             }
-            #If internet connection is not working, it might not download 
+
             If ($Y -ge 10) {
-                Write-Host "Did not download, Exit Script"
+                Write-Host "$(Get-Date -Format $dtFormat) [ERROR] $NiniteApp did not download, exiting script"
                 Get-Process | Where-Object { $_.Name -like "ninite*" } | Stop-Process -Verbose
                 exit 1
             }
 
-            #Monitor install process
+            # Monitor install process
             $PIDs = (Get-WmiObject win32_process -Filter { Name = 'Ninite.exe' }).ProcessID
-            Write-Host "Ninite Process IDs" $PIDs
+            Write-Host "$(Get-Date -Format $dtFormat) [INFO] Ninite Process IDs: $PIDs"
 
-            $MSIRunning = (Get-WmiObject win32_process -Filter { Name = "msiexec.exe" or Name = "Target.exe" } | Where-Object { $PIDs -contains $Psitem.ParentProcessID }).ProcessID 
+            $MSIRunning = (Get-WmiObject win32_process -Filter { Name = "msiexec.exe" or Name = "Target.exe" } | Where-Object { $PIDs -contains $_.ParentProcessID }).ProcessID 
             $X = 1
             while ($null -eq $MSIRunning -and $X -lt "$AppTimeout") {
                 $X++
-                start-sleep -Seconds 1
-                Write-Host "Waiting for Software Installer to Start"
-                $MSIRunning = (Get-WmiObject win32_process -Filter { Name = "msiexec.exe" or Name = "Target.exe" } | Where-Object { $PIDs -contains $Psitem.ParentProcessID }).ProcessID 
+                Start-Sleep -Seconds 1
+                Write-Host "$(Get-Date -Format $dtFormat) [INFO] Waiting for software installer to start"
+                $MSIRunning = (Get-WmiObject win32_process -Filter { Name = "msiexec.exe" or Name = "Target.exe" } | Where-Object { $PIDs -contains $_.ParentProcessID }).ProcessID 
             }
-            Write-Host "Installer Started"
-            Write-Host "Waiting for Software Installer To Finish"
-            $ParentPID = (Get-WmiObject win32_process -Filter { Name = "msiexec.exe" or Name = "Target.exe" } | Where-Object { $PIDs -contains $Psitem.ParentProcessID }).ProcessID
+            Write-Host "$(Get-Date -Format $dtFormat) [INFO] Installer started"
+            Write-Host "$(Get-Date -Format $dtFormat) [INFO] Waiting for software installer to finish"
+            $ParentPID = (Get-WmiObject win32_process -Filter { Name = "msiexec.exe" or Name = "Target.exe" } | Where-Object { $PIDs -contains $_.ParentProcessID }).ProcessID
             $ParentProc = Get-Process -Id $ParentPID
             $ParentProc.WaitForExit()
-            Write-Host "Software Install Finished" 
+            Write-Host "$(Get-Date -Format $dtFormat) [INFO] Software install finished"
 
-
-            #Kill Task on the Ninite Installer
-            start-sleep -Seconds 5
-            Write-Host "Kill Ninite Wrapper"
+            # Kill Task on the Ninite Installer
+            Start-Sleep -Seconds 5
+            Write-Host "$(Get-Date -Format $dtFormat) [INFO] Killing Ninite wrapper"
             Get-Process | Where-Object { $_.Name -like "ninite*" } | Stop-Process -Verbose
         }
 
-
-        #Remove the Ninite Installer
-        if (test-path $scriptDir\NiniteInstaller.exe) {
-            start-sleep -Seconds 2
-            Write-Host "Delete Ninite Installer"
-            Remove-Item "$scriptDir\NiniteInstaller.exe"
+        # Remove the Ninite Installer
+        if (Test-Path "$scriptDir\NiniteInstaller.exe") {
+            Start-Sleep -Seconds 2
+            Write-Host "$(Get-Date -Format $dtFormat) [INFO] Deleting Ninite installer"
+            try {
+                Remove-Item "$scriptDir\NiniteInstaller.exe"
+            } catch {
+                Write-Host "$(Get-Date -Format $dtFormat) [ERROR] Failed to delete Ninite installer: $_"
+            }
         }
 
-
-        #Run the Uninstall if in Uninstall Mode
+        # Run the Uninstall if in Uninstall Mode
         if ($Invoke -eq "Uninstall") {
-            { cmd.exe /c $uninstallstring }
+            Write-Host "$(Get-Date -Format $dtFormat) [INFO] Uninstalling $NiniteApp"
+            try {
+                cmd.exe /c $uninstallstring
+            } catch {
+                Write-Host "$(Get-Date -Format $dtFormat) [ERROR] Failed to uninstall $NiniteApp: $_"
+            }
         }
     }
 
+    Write-Host "$(Get-Date -Format $dtFormat) [INFO] Script finished"
     Stop-Transcript
 }
