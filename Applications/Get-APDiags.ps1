@@ -31,8 +31,6 @@ $params.GetEnumerator() | ForEach-Object {
     }
 }
 
-$PSBoundParameters
-
 Write-Host "Params"
 $params
 
