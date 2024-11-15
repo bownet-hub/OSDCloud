@@ -17,6 +17,12 @@ Start-Transcript -Path "$LogFile" -Append
 $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
 Write-Host "$(Get-Date -Format $dtFormat)"
 
+# Create a hashtable for splatting
+$params = @{}
+if (![string]::IsNullOrEmpty($Online)) { $params.Add("Online", $Online) }
+if (![string]::IsNullOrEmpty($AppId)) { $params.Add("AppId", $AppId) }
+if (![string]::IsNullOrEmpty($AppSecret)) { $params.Add("AppSecret", $AppSecret) }
+
 $params.GetEnumerator() | ForEach-Object {
     if ($_.Value -eq $true) {
         $argList += "-$($_.Key)"
