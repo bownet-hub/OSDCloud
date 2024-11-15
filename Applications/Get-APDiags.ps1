@@ -17,6 +17,19 @@ Start-Transcript -Path "$LogFile" -Append
 $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
 Write-Host "$(Get-Date -Format $dtFormat)"
 
+$params.GetEnumerator() | ForEach-Object {
+    if ($_.Value -eq $true) {
+        $argList += "-$($_.Key)"
+    } else {
+        $argList += "-$($_.Key) $($_.Value)"
+    }
+}
+
+$PSBoundParameters
+
+Write-Host "Params"
+$params
+
 # Get log file properties to use for measuring elapsed time
 $fileStart = Get-ChildItem -Path "C:\OSDCloud\Logs" -Filter *Deploy-OSDCloud.log
 $fileAP = Get-ChildItem -Path "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\IntuneManagementExtension.log"
