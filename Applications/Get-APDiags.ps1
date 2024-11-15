@@ -17,13 +17,14 @@ Start-Transcript -Path "$LogFile" -Append
 $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
 Write-Host "$(Get-Date -Format $dtFormat)"
 
-# Create a hashtable for splatting
+# Create hashtable of parameters to pass to script
 $params = @{}
 if (![string]::IsNullOrEmpty($Online)) { $params.Add("Online", $Online) }
 if (![string]::IsNullOrEmpty($AppId)) { $params.Add("AppId", $AppId) }
 if (![string]::IsNullOrEmpty($AppSecret)) { $params.Add("AppSecret", $AppSecret) }
 if (![string]::IsNullOrEmpty($Tenant)) { $params.Add("Tenant", $Tenant) }
 
+# Pass parameters to script using splatting
 $params.GetEnumerator() | ForEach-Object {
     if ($_.Value -eq $true) {
         $argList += "-$($_.Key)"
