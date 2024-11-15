@@ -32,9 +32,6 @@ $params.GetEnumerator() | ForEach-Object {
     }
 }
 
-Write-Host "Params"
-$params
-
 # Get log file properties to use for measuring elapsed time
 $fileStart = Get-ChildItem -Path "C:\OSDCloud\Logs" -Filter *Deploy-OSDCloud.log
 $fileAP = Get-ChildItem -Path "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\IntuneManagementExtension.log"
