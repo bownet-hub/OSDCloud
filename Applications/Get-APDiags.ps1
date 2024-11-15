@@ -22,6 +22,7 @@ $params = @{}
 if (![string]::IsNullOrEmpty($Online)) { $params.Add("Online", $Online) }
 if (![string]::IsNullOrEmpty($AppId)) { $params.Add("AppId", $AppId) }
 if (![string]::IsNullOrEmpty($AppSecret)) { $params.Add("AppSecret", $AppSecret) }
+if (![string]::IsNullOrEmpty($Tenant)) { $params.Add("Tenant", $Tenant) }
 
 $params.GetEnumerator() | ForEach-Object {
     if ($_.Value -eq $true) {
