@@ -49,7 +49,7 @@ if (-not (Test-Path $RegistryKey)) {
 }
 
 # Run script initially
-Get-AutoPilotDiagnosticsCommunity.ps1 @PSBoundParameters
+Get-AutoPilotDiagnosticsCommunity.ps1 @params
 
 # Get initial snapshot of subkeys
 $InitialSubkeys = Get-ChildItem $RegistryKey | Select-Object -ExpandProperty PSChildName
@@ -63,7 +63,7 @@ while ($true) {
 
     # Registry keys are added after each application install completes
     if ($NewSubkeys) {
-        Get-AutoPilotDiagnosticsCommunity.ps1 @PSBoundParameters
+        Get-AutoPilotDiagnosticsCommunity.ps1 @params
 
         # Compare creation time of AutoPilot Diagnostics log to current time
         $APTimeSpan = New-TimeSpan -Start $fileAP.CreationTime.ToUniversalTime() -End (Get-Date).ToUniversalTime()
