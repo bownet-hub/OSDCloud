@@ -44,7 +44,7 @@ function Send-Email {
                 attachments  = @(
                     @{
                         "@odata.type" = "#microsoft.graph.fileAttachment"
-                        Name          = "attachment.txt"
+                        Name          = "Autopilot-$ComputerName.txt"
                         ContentBytes  = $attachmentEncoded
                     }
                 )
