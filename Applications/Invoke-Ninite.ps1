@@ -82,6 +82,7 @@ Function Invoke-Ninite {
             # Download the Ninite file
             Write-Host "$(Get-Date -Format $dtFormat) [INFO] Downloading $NiniteApp to $scriptDir"
             try {
+                $ProgressPreference = 'SilentlyContinue'
                 Invoke-WebRequest -Uri $downloadlink -OutFile "$scriptDir\NiniteInstaller.exe" -UseBasicParsing -Verbose
             } catch {
                 Write-Host "$(Get-Date -Format $dtFormat) [ERROR] Failed to download $NiniteApp: $_"
