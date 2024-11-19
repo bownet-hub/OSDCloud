@@ -93,12 +93,12 @@ function Get-AutopilotResults {
     Where-Object { 
         ($_.Name -like "*.log" -or $_.Name -like "*.txt") -and 
         ($_.Name -notmatch "AgentExecutor.log|.*IntuneManagement.*|.*Autopilot.*|.*app.*|ClientCertCheck.log|.*health.*|Sensor.log")
-    } | Sort-Object { $_.CreationTime.ToUniversalTime() }
+    } | Sort-Object { $_.CreationTimeUtc }
 
     # Per app time - OS deployment directory
     # Sorted by creation time
     $filesOSD = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
-    Where-Object { ($_.Name -like "*OSDCloud.log") -OR ( $_.Name -like "SetupComplete.log") } | Sort-Object { $_.CreationTime.ToUniversalTime() }
+    Where-Object { ($_.Name -like "*OSDCloud.log") -OR ( $_.Name -like "SetupComplete.log") } | Sort-Object { $_.CreationTimeUtc }
 
     # Initialize a variable to hold the total time span
     $totalTimeSpan = [TimeSpan]::Zero
@@ -115,7 +115,7 @@ function Get-AutopilotResults {
     Write-Host '========================================================================='
     foreach ($file in $filesOSD) {
         # Time between start and end of log file
-        $timeSpan = New-TimeSpan -Start $file.CreationTime.ToUniversalTime() -End $file.LastWriteTime.ToUniversalTime()
+        $timeSpan = New-TimeSpan -Start $file.CreationTimeUtc -End $file.LastWriteTimeUtc
         # Remove extension for cleaner look
         $fileNameWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
         Write-Host "$($timeSpan.ToString("mm' minutes 'ss' seconds'"))     $fileNameWithoutExtension "
@@ -126,7 +126,7 @@ function Get-AutopilotResults {
     Write-Host '========================================================================='
     foreach ($file in $filesLog) {
         # Time between start and end of log file
-        $timeSpan = New-TimeSpan -Start $file.CreationTime.ToUniversalTime() -End $file.LastWriteTime.ToUniversalTime()
+        $timeSpan = New-TimeSpan -Start $file.CreationTimeUtc -End $file.LastWriteTimeUtc
         if ($file.Name -eq "install.log") {
             # Display only the directory name as file names are the same
             Write-Host "$($timeSpan.ToString("mm' minutes 'ss' seconds'"))     $($file.Directory.Name) "
@@ -144,10 +144,10 @@ function Get-AutopilotResults {
     # Time between first and last log file
     if ((Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | Sort-Object CreationTime | Select-Object -First 1) -like "SetupComplete.log") {
         # Adjust for Daylight Savings if SetupComplete.log CreationTime is before OSDCloud.log
-        $totalTimeSpan = New-TimeSpan -Start $firstCreatedFile.CreationTime.ToUniversalTime().AddHours(-1) -End $lastModifiedFile.LastWriteTime.ToUniversalTime()
+        $totalTimeSpan = New-TimeSpan -Start $firstCreatedFile.CreationTimeUtc.AddHours(-1) -End $lastModifiedFile.LastWriteTimeUtc
     }
     else {
-        $totalTimeSpan = New-TimeSpan -Start $firstCreatedFile.CreationTime.ToUniversalTime() -End $lastModifiedFile.LastWriteTime.ToUniversalTime()
+        $totalTimeSpan = New-TimeSpan -Start $firstCreatedFile.CreationTimeUtc -End $lastModifiedFile.LastWriteTimeUtc
     }
     Write-Host "Total Elapsed Time: $($totalTimeSpan.ToString("hh' hours 'mm' minutes 'ss' seconds'"))"
 
