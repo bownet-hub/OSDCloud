@@ -84,7 +84,7 @@ function Get-AutopilotResults {
     $lastModifiedFile = Get-ChildItem -Path "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs" -Recurse -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
     # Total time - OS deployment directory
-    $firstCreatedFile = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | Sort-Object CreationTime | Select-Object -First 1
+    $firstCreatedFile = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | Where-Object { $_.Name -like "*OSDCloud.log" }
 
     # Per app time - app install directory
     # Exclude Intune logs
@@ -142,7 +142,13 @@ function Get-AutopilotResults {
     Write-Host "Total"
     Write-Host '========================================================================='
     # Time between first and last log file
-    $totalTimeSpan = New-TimeSpan -Start $firstCreatedFile.CreationTime.ToUniversalTime() -End $lastModifiedFile.LastWriteTime.ToUniversalTime()
+    if ((Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | Sort-Object CreationTime | Select-Object -First 1) -like "SetupComplete.log") {
+        # Adjust for Daylight Savings if SetupComplete.log CreationTime is before OSDCloud.log
+        $totalTimeSpan = New-TimeSpan -Start $firstCreatedFile.CreationTime.ToUniversalTime().AddHours(-1) -End $lastModifiedFile.LastWriteTime.ToUniversalTime()
+    }
+    else {
+        $totalTimeSpan = New-TimeSpan -Start $firstCreatedFile.CreationTime.ToUniversalTime() -End $lastModifiedFile.LastWriteTime.ToUniversalTime()
+    }
     Write-Host "Total Elapsed Time: $($totalTimeSpan.ToString("hh' hours 'mm' minutes 'ss' seconds'"))"
 
     Stop-Transcript
