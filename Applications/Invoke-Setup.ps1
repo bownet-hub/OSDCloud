@@ -91,6 +91,7 @@ Function Install {
     #Run the Install if in Install Mode
     if ($url) {
         Write-Host "Downloading the installer to $InstallerPath"
+        $ProgressPreference = 'SilentlyContinue'
         Invoke-WebRequest -Uri $url -OutFile "$InstallerPath" -UseBasicParsing -Verbose
         if (!(Test-Path "$InstallerPath")) {
             Write-Host "Did not download, Exit Script"
