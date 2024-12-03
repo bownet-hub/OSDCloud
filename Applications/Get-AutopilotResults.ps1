@@ -71,9 +71,9 @@ function Send-Email {
 
 function Get-AutopilotResults {
     param(
-        [Parameter(Mandatory = $true)] [string] $ClientId,
-        [Parameter(Mandatory = $true)] [string] $ClientSecret,
-        [Parameter(Mandatory = $true)] [string] $TenantID,
+        [Parameter(Mandatory = $true)] [string] $AppId,
+        [Parameter(Mandatory = $true)] [string] $AppSecret,
+        [Parameter(Mandatory = $true)] [string] $Tenant,
         [Parameter(Mandatory = $true)] [string] $ToRecipient,
         [Parameter(Mandatory = $true)] [string] $From
     )
