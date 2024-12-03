@@ -4,7 +4,8 @@ function Send-Email {
         [Parameter(Mandatory = $true)] [string] $AppSecret,
         [Parameter(Mandatory = $true)] [string] $Tenant,
         [Parameter(Mandatory = $true)] [string] $ToRecipient,
-        [Parameter(Mandatory = $true)] [string] $From
+        [Parameter(Mandatory = $true)] [string] $From,
+        [Parameter(Mandatory = $true)] [string] $attachmentPath
     )
     
     try {
@@ -15,13 +16,13 @@ function Send-Email {
         
         # Get the access token
         $body = @{
-            client_id     = $ClientId
+            client_id     = $AppId
             scope         = "https://graph.microsoft.com/.default"
-            client_secret = $ClientSecret
+            client_secret = $AppSecret
             grant_type    = "client_credentials"
         }
         
-        $response = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$TenantId/oauth2/v2.0/token" -Method Post -ContentType "application/x-www-form-urlencoded" -Body $body
+        $response = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$Tenant/oauth2/v2.0/token" -Method Post -ContentType "application/x-www-form-urlencoded" -Body $body
         $accessToken = $response.access_token
         
         # Read the attachment as a byte array
@@ -152,5 +153,5 @@ function Get-AutopilotResults {
 
     Stop-Transcript
 
-    Send-Email -ClientId $ClientId -ClientSecret $ClientSecret -TenantID $TenantId -ToRecipient $ToRecipient -From $From -attachmentPath $LogPath
+    Send-Email -AppId $AppId -AppSecret $AppSecret -Tenant $Tenant -ToRecipient $ToRecipient -From $From -attachmentPath $LogPath
 }
