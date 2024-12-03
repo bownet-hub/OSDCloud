@@ -1,11 +1,10 @@
 function Send-Email {
     param(
-        [Parameter(Mandatory = $true)] [string] $ClientId,
-        [Parameter(Mandatory = $true)] [string] $ClientSecret,
-        [Parameter(Mandatory = $true)] [string] $TenantID,
+        [Parameter(Mandatory = $true)] [string] $AppId,
+        [Parameter(Mandatory = $true)] [string] $AppSecret,
+        [Parameter(Mandatory = $true)] [string] $Tenant,
         [Parameter(Mandatory = $true)] [string] $ToRecipient,
-        [Parameter(Mandatory = $true)] [string] $From,
-        [Parameter(Mandatory = $true)] [string] $attachmentPath
+        [Parameter(Mandatory = $true)] [string] $From
     )
     
     try {
