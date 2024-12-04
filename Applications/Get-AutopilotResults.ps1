@@ -106,7 +106,7 @@ function Get-AutopilotResults {
     $LogPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutopilotLog.log"
 
     # Start logging
-    Start-Transcript -Path "$LogPath" -Append
+    Start-Transcript -Path "$LogPath" -Append -UseMinimalHeader
     $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
     Write-Host "$(Get-Date -Format $dtFormat)"
 
