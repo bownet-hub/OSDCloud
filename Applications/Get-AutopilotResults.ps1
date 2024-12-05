@@ -99,7 +99,7 @@ function Get-AutopilotResults {
 function Get-AutopilotDiagnosticInfo {
     <#PSScriptInfo
  
-.VERSION 5.7
+.VERSION 5.10
 .GUID b45605b6-65aa-45ec-a23c-f5291f9fb519
 .AUTHOR AndrewTaylor, Michael Niehaus & Steven van Beek
 .COMPANYNAME
@@ -113,6 +113,8 @@ function Get-AutopilotDiagnosticInfo {
 .EXTERNALSCRIPTDEPENDENCIES
 .RELEASENOTES
 .RELEASENOTES
+Version 5.10: Additional logic for DO downloads, MSI product names
+Version 5.9: Code Signed
 Version 5.7: Fixed LastLoggedState for Win32Apps and Added support for new Graph Module
 Version 5.6: Fixed parameter handling
 Version 5.5: Added support for a zip file
@@ -386,8 +388,15 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
             # See if there is already an entry for this policy and status
             $found = $script:observedTimeline | ? { $_.Detail -eq $detail -and $_.Status -eq $status }
             if (-not $found) {
+                # Apply a fudge so that the downloading of the next app appears one second after the previous completion
+                if ($status -like "Downloading*") {
+                    $adjustedDate = $date.AddSeconds(1)
+                }
+                else {
+                    $adjustedDate = $date
+                }
                 $script:observedTimeline += New-Object PSObject -Property @{
-                    "Date"   = $date
+                    "Date"   = $adjustedDate
                     "Detail" = $detail
                     "Status" = $status
                     "Color"  = $color
@@ -438,14 +447,21 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
                             $found = $apps | ? { $_.ProductCode -contains $msiKey }
                             $msiKey = "$($found.DisplayName) ($($msiKey))"
                         }
+                        elseif ($currentUser -eq "S-0-0-00-0000000000-0000000000-000000000-000") {
+                            # Try to read the name from the uninstall registry key
+                            if (Test-Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$msiKey") {
+                                $displayName = (Get-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$msiKey").DisplayName
+                                $msiKey = "$displayName ($($msiKey))"
+                            }
+                        }
                         if ($status -eq 70) {
                             if ($display) { Write-Host " MSI $msiKey : $status ($($officeStatus[$status.ToString()]))" -ForegroundColor Green }
                             RecordStatus -detail "MSI $msiKey" -status $officeStatus[$status.ToString()] -color "Green" -date $currentKey.PSChildName
                         }
-                        elseif ($status -eq 60) {
-                            if ($display) { Write-Host " MSI $msiKey : $status ($($officeStatus[$status.ToString()]))" -ForegroundColor Red }
-                            RecordStatus -detail "MSI $msiKey" -status $officeStatus[$status.ToString()] -color "Red" -date $currentKey.PSChildName
-                        }
+                        #elseif ($status -eq 60) {
+                        #    if ($display) { Write-Host " MSI $msiKey : $status ($($officeStatus[$status.ToString()]))" -ForegroundColor Red }
+                        #    RecordStatus -detail "MSI $msiKey" -status $officeStatus[$status.ToString()] -color "Red" -date $currentKey.PSChildName
+                        #}
                         #else {
                         #    if ($display) { Write-Host " MSI $msiKey : $status ($($officeStatus[$status.ToString()]))" -ForegroundColor Yellow }
                         #    RecordStatus -detail "MSI $msiKey" -status $officeStatus[$status.ToString()] -color "Yellow" -date $currentKey.PSChildName
@@ -544,6 +560,9 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
 
             Begin {
                 if ($display) { Write-Host "Sidecar apps:" }
+                if ($null -eq $script:DOEvents -and (-not $script:useFile)) {
+                    $script:DOEvents = Get-DeliveryOptimizationLog | Where-Object { $_.Function -match "(DownloadStart)|(DownloadCompleted)" -and $_.Message -like "*.intunewin*" }
+                }
             }
 
             Process {
@@ -589,6 +608,12 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
                     #    if ($status -ne "1") {
                     #        RecordStatus -detail "Win32 $win32Key" -status $espStatus[$status.ToString()] -color "Yellow" -date $currentKey.PSChildName
                     #    }
+                    #    if ($status -eq "2") {
+                    #        # Try to find the DO events.
+                    #        $script:DOEvents | Where-Object { $_.Message -ilike "*$appGuid*" } | ForEach-Object {
+                    #            RecordStatus -detail "Win32 $win32Key" -status "DO $($_.Function.Substring(32))" -color "Yellow" -date $_.TimeCreated.ToLocalTime()
+                    #        }
+                    #    }
                     #}
                 }
             }
@@ -614,9 +639,9 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
                         if ($display) { Write-Host " Policy $_ : $status ($($policyStatus[$status.ToString()]))" -ForegroundColor Green }
                         RecordStatus -detail "Policy $_" -status $policyStatus[$status.ToString()] -color "Green" -date $currentKey.PSChildName
                     }
-                    #else {
-                    #    if ($display) { Write-Host " Policy $_ : $status ($($policyStatus[$status.ToString()]))" -ForegroundColor Yellow }
-                    #}
+                    else {
+                        if ($display) { Write-Host " Policy $_ : $status ($($policyStatus[$status.ToString()]))" -ForegroundColor Yellow }
+                    }
                 }
             }
 
@@ -673,6 +698,34 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
 
         }
 
+        Function TrimMSI() {
+            param (
+                [object] $event,
+                [string] $sidecarProductCode
+            )
+
+            # Fix up the name
+            if ($event.Properties[0].Value -eq $sidecarProductCode) {
+                return "Intune Management Extension"
+            }
+            elseif ($event.Properties[0].Value.StartsWith("{{")) {
+                $r = $event.Properties[0].Value.Substring(1, $event.Properties[0].Value.Length - 2)
+            }
+            else {
+                $r = $event.Properties[0].Value
+            }
+
+            # See if we can find the real name
+            if (Test-Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$r") {
+                $displayName = (Get-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$r").DisplayName
+                return "$displayName ($($r))"
+            }
+            else {
+                return $r
+            }
+
+        }
+
         Function ProcessEvents() {
 
             Process {
@@ -689,10 +742,10 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
 
                 # Process device management events
                 if ($script:useFile) {
-                    $events = Get-WinEvent -Path "$($env:TEMP)\ESPStatus.tmp\microsoft-windows-devicemanagement-enterprise-diagnostics-provider-admin.evtx" -Oldest | ? { ($_.Message -match $productCode -and $_.Id -in 1905, 1906, 1920, 1922) -or $_.Id -in (72, 100, 107, 109, 110, 111) }
+                    $events = Get-WinEvent -Path "$($env:TEMP)\ESPStatus.tmp\microsoft-windows-devicemanagement-enterprise-diagnostics-provider-admin.evtx" -Oldest | ? { ($_.Id -in 1905, 1906, 1920, 1922) -or $_.Id -in (72, 100, 107, 109, 110, 111) }
                 }
                 else {
-                    $events = Get-WinEvent -LogName Microsoft-Windows-DeviceManagement-Enterprise-Diagnostics-Provider/Admin -Oldest | ? { ($_.Message -match $productCode -and $_.Id -in 1905, 1906, 1920, 1922) -or $_.Id -in (72, 100, 107, 109, 110, 111) }
+                    $events = Get-WinEvent -LogName Microsoft-Windows-DeviceManagement-Enterprise-Diagnostics-Provider/Admin -Oldest | ? { ($_.Id -in 1905, 1906, 1920, 1922) -or $_.Id -in (72, 100, 107, 109, 110, 111) }
                 }
                 $events | % {
                     $message = $_.Message
@@ -713,10 +766,10 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
                         107 { $detail = "Offline Domain Join"; $message = "Successfully applied ODJ blob" }
                         100 { $detail = "Offline Domain Join"; $message = "Could not establish connectivity"; $color = "Red" }
                         72 { $detail = "MDM Enrollment" }
-                        1905 { $message = "Download started" }
-                        1906 { $message = "Download finished" }
-                        1920 { $message = "Installation started" }
-                        1922 { $message = "Installation finished" }
+                        1905 { $detail = (TrimMSI $event $productCode); $message = "Download started" }
+                        1906 { $detail = (TrimMSI $event $productCode); $message = "Download finished" }
+                        1920 { $detail = (TrimMSI $event $productCode); $message = "Installation started" }
+                        1922 { $detail = (TrimMSI $event $productCode); $message = "Installation finished" }
                         { $_ -in (1922, 72) } { $color = "Green" }
                     }
                     RecordStatus -detail $detail -date $_.TimeCreated -status $message -color $color
@@ -799,7 +852,183 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
             $script:policies = Get-MgBetaDeviceManagementConfigurationPolicy -All
         }
 
+        # Display Autopilot diag details
+        Write-Host ""
+        Write-Host "AUTOPILOT DIAGNOSTICS" -ForegroundColor Magenta
+        Write-Host ""
 
+        $values = Get-ItemProperty "$autopilotDiagPath"
+        if (-not $values.CloudAssignedTenantId) {
+            Write-Host "This is not an Autopilot device.`n"
+            exit 0
+        }
+
+        if (-not $script:useFile) {
+            $osVersion = (Get-WmiObject win32_operatingsystem).Version
+            Write-Host "OS version: $osVersion"
+        }
+        Write-Host "Profile: $($values.DeploymentProfileName)"
+        Write-Host "TenantDomain: $($values.CloudAssignedTenantDomain)"
+        Write-Host "TenantID: $($values.CloudAssignedTenantId)"
+        $correlations = Get-ItemProperty "$autopilotDiagPath\EstablishedCorrelations"
+        Write-Host "ZTDID: $($correlations.ZTDRegistrationID)"
+        Write-Host "EntDMID: $($correlations.EntDMID)"
+
+        Write-Host "OobeConfig: $($values.CloudAssignedOobeConfig)"
+
+        if (($values.CloudAssignedOobeConfig -band 1024) -gt 0) {
+            Write-Host " Skip keyboard: Yes 1 - - - - - - - - - -"
+        }
+        else {
+            Write-Host " Skip keyboard: No 0 - - - - - - - - - -"
+        }
+        if (($values.CloudAssignedOobeConfig -band 512) -gt 0) {
+            Write-Host " Enable patch download: Yes - 1 - - - - - - - - -"
+        }
+        else {
+            Write-Host " Enable patch download: No - 0 - - - - - - - - -"
+        }
+        if (($values.CloudAssignedOobeConfig -band 256) -gt 0) {
+            Write-Host " Skip Windows upgrade UX: Yes - - 1 - - - - - - - -"
+        }
+        else {
+            Write-Host " Skip Windows upgrade UX: No - - 0 - - - - - - - -"
+        }
+        if (($values.CloudAssignedOobeConfig -band 128) -gt 0) {
+            Write-Host " AAD TPM Required: Yes - - - 1 - - - - - - -"
+        }
+        else {
+            Write-Host " AAD TPM Required: No - - - 0 - - - - - - -"
+        }
+        if (($values.CloudAssignedOobeConfig -band 64) -gt 0) {
+            Write-Host " AAD device auth: Yes - - - - 1 - - - - - -"
+        }
+        else {
+            Write-Host " AAD device auth: No - - - - 0 - - - - - -"
+        }
+        if (($values.CloudAssignedOobeConfig -band 32) -gt 0) {
+            Write-Host " TPM attestation: Yes - - - - - 1 - - - - -"
+        }
+        else {
+            Write-Host " TPM attestation: No - - - - - 0 - - - - -"
+        }
+        if (($values.CloudAssignedOobeConfig -band 16) -gt 0) {
+            Write-Host " Skip EULA: Yes - - - - - - 1 - - - -"
+        }
+        else {
+            Write-Host " Skip EULA: No - - - - - - 0 - - - -"
+        }
+        if (($values.CloudAssignedOobeConfig -band 8) -gt 0) {
+            Write-Host " Skip OEM registration: Yes - - - - - - - 1 - - -"
+        }
+        else {
+            Write-Host " Skip OEM registration: No - - - - - - - 0 - - -"
+        }
+        if (($values.CloudAssignedOobeConfig -band 4) -gt 0) {
+            Write-Host " Skip express settings: Yes - - - - - - - - 1 - -"
+        }
+        else {
+            Write-Host " Skip express settings: No - - - - - - - - 0 - -"
+        }
+        if (($values.CloudAssignedOobeConfig -band 2) -gt 0) {
+            Write-Host " Disallow admin: Yes - - - - - - - - - 1 -"
+        }
+        else {
+            Write-Host " Disallow admin: No - - - - - - - - - 0 -"
+        }
+
+        # In theory we could read these values from the profile cache registry key, but it's so bungled
+        # up in the registry export that it doesn't import without some serious massaging for embedded
+        # quotes. So this is easier.
+        if ($script:useFile) {
+            $jsonFile = "$($env:TEMP)\ESPStatus.tmp\AutopilotDDSZTDFile.json"
+        }
+        else {
+            $jsonFile = "$($env:WINDIR)\ServiceState\wmansvc\AutopilotDDSZTDFile.json" 
+        }
+        if (Test-Path $jsonFile) {
+            $json = Get-Content $jsonFile | ConvertFrom-Json
+            $date = [datetime]$json.PolicyDownloadDate
+            RecordStatus -date $date -detail "Autopilot profile" -status "Profile downloaded" -color "Yellow" 
+            if ($json.CloudAssignedDomainJoinMethod -eq 1) {
+                Write-Host "Scenario: Hybrid Azure AD Join"
+                if (Test-Path "$omadmPath\SyncML\ODJApplied") {
+                    Write-Host "ODJ applied: Yes"
+                }
+                else {
+                    Write-Host "ODJ applied: No"                
+                }
+                if ($json.HybridJoinSkipDCConnectivityCheck -eq 1) {
+                    Write-Host "Skip connectivity check: Yes"
+                }
+                else {
+                    Write-Host "Skip connectivity check: No"
+                }
+
+            }
+            else {
+                Write-Host "Scenario: Azure AD Join"
+            }
+        }
+        else {
+            Write-Host "Scenario: Not available (JSON not found)"
+        }
+
+        # Get ESP properties
+        Get-ChildItem $enrollmentsPath | ? { Test-Path "$($_.PSPath)\FirstSync" } | % {
+            $properties = Get-ItemProperty "$($_.PSPath)\FirstSync"
+            Write-Host "Enrollment status page:"
+            Write-Host " Device ESP enabled: $($properties.SkipDeviceStatusPage -eq 0)"
+            Write-Host " User ESP enabled: $($properties.SkipUserStatusPage -eq 0)"
+            Write-Host " ESP timeout: $($properties.SyncFailureTimeout)"
+            if ($properties.BlockInStatusPage -eq 0) {
+                Write-Host " ESP blocking: No"
+            }
+            else {
+                Write-Host " ESP blocking: Yes"
+                if ($properties.BlockInStatusPage -band 1) {
+                    Write-Host " ESP allow reset: Yes"
+                }
+                if ($properties.BlockInStatusPage -band 2) {
+                    Write-Host " ESP allow try again: Yes"
+                }
+                if ($properties.BlockInStatusPage -band 4) {
+                    Write-Host " ESP continue anyway: Yes"
+                }
+            }
+        }
+
+        # Get Delivery Optimization statistics (when available)
+        if (-not $script:useFile) {
+            $stats = Get-DeliveryOptimizationPerfSnapThisMonth
+            if ($stats.DownloadHttpBytes -ne 0) {
+                $peerPct = [math]::Round( ($stats.DownloadLanBytes / $stats.DownloadHttpBytes) * 100 )
+                $ccPct = [math]::Round( ($stats.DownloadCacheHostBytes / $stats.DownloadHttpBytes) * 100 )
+            }
+            else {
+                $peerPct = 0
+                $ccPct = 0
+            }
+            Write-Host "Delivery Optimization statistics:"
+            Write-Host " Total bytes downloaded: $($stats.DownloadHttpBytes)"
+            Write-Host " From peers: $($peerPct)% ($($stats.DownloadLanBytes))"
+            Write-host " From Connected Cache: $($ccPct)% ($($stats.DownloadCacheHostBytes))"
+        }
+
+        # If the ADK is installed, get some key hardware hash info
+        $adkPath = Get-ItemPropertyValue "HKLM:\Software\Microsoft\Windows Kits\Installed Roots" -Name KitsRoot10 -ErrorAction SilentlyContinue
+        $oa3Tool = "$adkPath\Assessment and Deployment Kit\Deployment Tools\$($env:PROCESSOR_ARCHITECTURE)\Licensing\OA30\oa3tool.exe"
+        if ($hash -and (Test-Path $oa3Tool)) {
+            $commandLineArgs = "/decodehwhash:$hash"
+            $output = & "$oa3Tool" $commandLineArgs
+            [xml] $hashXML = $output | Select -skip 8 -First ($output.Count - 12)
+            Write-Host "Hardware information:"
+            Write-Host " Operating system build: " $hashXML.SelectSingleNode("//p[@n='OsBuild']").v
+            Write-Host " Manufacturer: " $hashXML.SelectSingleNode("//p[@n='SmbiosSystemManufacturer']").v
+            Write-Host " Model: " $hashXML.SelectSingleNode("//p[@n='SmbiosSystemProductName']").v
+            Write-Host " Serial number: " $hashXML.SelectSingleNode("//p[@n='SmbiosSystemSerialNumber']").v
+            Write-Host " TPM version: " $hashXML.SelectSingleNode("//p[@n='TPMVersion']").v
+        }
     
         # Process event log info
         ProcessEvents
@@ -882,7 +1111,6 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
         else {
             Write-Host "ESP diagnostics info does not (yet) exist."
         }
-
 
         # Display timeline
         Write-Host ""
