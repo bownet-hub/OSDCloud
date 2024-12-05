@@ -858,10 +858,10 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
         Write-Host ""
 
         $values = Get-ItemProperty "$autopilotDiagPath"
-        if (-not $values.CloudAssignedTenantId) {
-            Write-Host "This is not an Autopilot device.`n"
-            exit 0
-        }
+        #if (-not $values.CloudAssignedTenantId) {
+        #    Write-Host "This is not an Autopilot device.`n"
+        #    exit 0
+        #}
 
         if (-not $script:useFile) {
             $osVersion = (Get-WmiObject win32_operatingsystem).Version
