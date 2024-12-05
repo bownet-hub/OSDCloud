@@ -1,3 +1,31 @@
+
+
+function Get-AutopilotResults {
+    param(
+        [Parameter(Mandatory = $true)] [string] $AppId,
+        [Parameter(Mandatory = $true)] [string] $AppSecret,
+        [Parameter(Mandatory = $true)] [string] $Tenant,
+        [Parameter(Mandatory = $true)] [string] $ToRecipient,
+        [Parameter(Mandatory = $true)] [string] $From
+    )
+
+    $LogPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutopilotLog.log"
+
+    # Start logging
+    Start-Transcript -Path $LogPath
+    $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
+    Write-Host "$(Get-Date -Format $dtFormat)"
+
+    Get-AutopilotDiagnosticInfo -Online -Tenant $Tenant -AppId $AppId -AppSecret $AppSecret
+
+    Stop-Transcript
+
+    # Remove the header containing sensitive information from the transcript file before emailing
+    (Get-Content $LogPath | Select-Object -Skip 18) | Set-Content $LogPath
+
+    Send-Email -AppId $AppId -AppSecret $AppSecret -Tenant $Tenant -ToRecipient $ToRecipient -From $From -attachmentPath $LogPath
+}
+
 function Send-Email {
     param(
         [Parameter(Mandatory = $true)] [string] $AppId,
@@ -68,32 +96,6 @@ function Send-Email {
     catch {
         Write-Error "Failed to send email: $_"
     }
-}
-
-function Get-AutopilotResults {
-    param(
-        [Parameter(Mandatory = $true)] [string] $AppId,
-        [Parameter(Mandatory = $true)] [string] $AppSecret,
-        [Parameter(Mandatory = $true)] [string] $Tenant,
-        [Parameter(Mandatory = $true)] [string] $ToRecipient,
-        [Parameter(Mandatory = $true)] [string] $From
-    )
-
-    $LogPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutopilotLog.log"
-
-    # Start logging
-    Start-Transcript -Path $LogPath
-    $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
-    Write-Host "$(Get-Date -Format $dtFormat)"
-
-    Get-AutopilotDiagnosticInfo -Online -Tenant $Tenant -AppId $AppId -AppSecret $AppSecret
-
-    Stop-Transcript
-
-    # Remove the header containing sensitive information from the transcript file before emailing
-    (Get-Content $LogPath | Select-Object -Skip 18) | Set-Content $LogPath
-
-    Send-Email -AppId $AppId -AppSecret $AppSecret -Tenant $Tenant -ToRecipient $ToRecipient -From $From -attachmentPath $LogPath
 }
 
 function Get-AutopilotDiagnosticInfo {
@@ -852,193 +854,11 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
             $script:policies = Get-MgBetaDeviceManagementConfigurationPolicy -All
         }
 
-        # Display Autopilot diag details
-        Write-Host ""
-        Write-Host "AUTOPILOT DIAGNOSTICS" -ForegroundColor Magenta
-        Write-Host ""
 
-        $values = Get-ItemProperty "$autopilotDiagPath"
-        #if (-not $values.CloudAssignedTenantId) {
-        #    Write-Host "This is not an Autopilot device.`n"
-        #    exit 0
-        #}
-
-        if (-not $script:useFile) {
-            $osVersion = (Get-WmiObject win32_operatingsystem).Version
-            Write-Host "OS version: $osVersion"
-        }
-        Write-Host "Profile: $($values.DeploymentProfileName)"
-        Write-Host "TenantDomain: $($values.CloudAssignedTenantDomain)"
-        Write-Host "TenantID: $($values.CloudAssignedTenantId)"
-        $correlations = Get-ItemProperty "$autopilotDiagPath\EstablishedCorrelations"
-        Write-Host "ZTDID: $($correlations.ZTDRegistrationID)"
-        Write-Host "EntDMID: $($correlations.EntDMID)"
-
-        Write-Host "OobeConfig: $($values.CloudAssignedOobeConfig)"
-
-        if (($values.CloudAssignedOobeConfig -band 1024) -gt 0) {
-            Write-Host " Skip keyboard: Yes 1 - - - - - - - - - -"
-        }
-        else {
-            Write-Host " Skip keyboard: No 0 - - - - - - - - - -"
-        }
-        if (($values.CloudAssignedOobeConfig -band 512) -gt 0) {
-            Write-Host " Enable patch download: Yes - 1 - - - - - - - - -"
-        }
-        else {
-            Write-Host " Enable patch download: No - 0 - - - - - - - - -"
-        }
-        if (($values.CloudAssignedOobeConfig -band 256) -gt 0) {
-            Write-Host " Skip Windows upgrade UX: Yes - - 1 - - - - - - - -"
-        }
-        else {
-            Write-Host " Skip Windows upgrade UX: No - - 0 - - - - - - - -"
-        }
-        if (($values.CloudAssignedOobeConfig -band 128) -gt 0) {
-            Write-Host " AAD TPM Required: Yes - - - 1 - - - - - - -"
-        }
-        else {
-            Write-Host " AAD TPM Required: No - - - 0 - - - - - - -"
-        }
-        if (($values.CloudAssignedOobeConfig -band 64) -gt 0) {
-            Write-Host " AAD device auth: Yes - - - - 1 - - - - - -"
-        }
-        else {
-            Write-Host " AAD device auth: No - - - - 0 - - - - - -"
-        }
-        if (($values.CloudAssignedOobeConfig -band 32) -gt 0) {
-            Write-Host " TPM attestation: Yes - - - - - 1 - - - - -"
-        }
-        else {
-            Write-Host " TPM attestation: No - - - - - 0 - - - - -"
-        }
-        if (($values.CloudAssignedOobeConfig -band 16) -gt 0) {
-            Write-Host " Skip EULA: Yes - - - - - - 1 - - - -"
-        }
-        else {
-            Write-Host " Skip EULA: No - - - - - - 0 - - - -"
-        }
-        if (($values.CloudAssignedOobeConfig -band 8) -gt 0) {
-            Write-Host " Skip OEM registration: Yes - - - - - - - 1 - - -"
-        }
-        else {
-            Write-Host " Skip OEM registration: No - - - - - - - 0 - - -"
-        }
-        if (($values.CloudAssignedOobeConfig -band 4) -gt 0) {
-            Write-Host " Skip express settings: Yes - - - - - - - - 1 - -"
-        }
-        else {
-            Write-Host " Skip express settings: No - - - - - - - - 0 - -"
-        }
-        if (($values.CloudAssignedOobeConfig -band 2) -gt 0) {
-            Write-Host " Disallow admin: Yes - - - - - - - - - 1 -"
-        }
-        else {
-            Write-Host " Disallow admin: No - - - - - - - - - 0 -"
-        }
-
-        # In theory we could read these values from the profile cache registry key, but it's so bungled
-        # up in the registry export that it doesn't import without some serious massaging for embedded
-        # quotes. So this is easier.
-        if ($script:useFile) {
-            $jsonFile = "$($env:TEMP)\ESPStatus.tmp\AutopilotDDSZTDFile.json"
-        }
-        else {
-            $jsonFile = "$($env:WINDIR)\ServiceState\wmansvc\AutopilotDDSZTDFile.json" 
-        }
-        if (Test-Path $jsonFile) {
-            $json = Get-Content $jsonFile | ConvertFrom-Json
-            $date = [datetime]$json.PolicyDownloadDate
-            RecordStatus -date $date -detail "Autopilot profile" -status "Profile downloaded" -color "Yellow" 
-            if ($json.CloudAssignedDomainJoinMethod -eq 1) {
-                Write-Host "Scenario: Hybrid Azure AD Join"
-                if (Test-Path "$omadmPath\SyncML\ODJApplied") {
-                    Write-Host "ODJ applied: Yes"
-                }
-                else {
-                    Write-Host "ODJ applied: No"                
-                }
-                if ($json.HybridJoinSkipDCConnectivityCheck -eq 1) {
-                    Write-Host "Skip connectivity check: Yes"
-                }
-                else {
-                    Write-Host "Skip connectivity check: No"
-                }
-
-            }
-            else {
-                Write-Host "Scenario: Azure AD Join"
-            }
-        }
-        else {
-            Write-Host "Scenario: Not available (JSON not found)"
-        }
-
-        # Get ESP properties
-        Get-ChildItem $enrollmentsPath | ? { Test-Path "$($_.PSPath)\FirstSync" } | % {
-            $properties = Get-ItemProperty "$($_.PSPath)\FirstSync"
-            Write-Host "Enrollment status page:"
-            Write-Host " Device ESP enabled: $($properties.SkipDeviceStatusPage -eq 0)"
-            Write-Host " User ESP enabled: $($properties.SkipUserStatusPage -eq 0)"
-            Write-Host " ESP timeout: $($properties.SyncFailureTimeout)"
-            if ($properties.BlockInStatusPage -eq 0) {
-                Write-Host " ESP blocking: No"
-            }
-            else {
-                Write-Host " ESP blocking: Yes"
-                if ($properties.BlockInStatusPage -band 1) {
-                    Write-Host " ESP allow reset: Yes"
-                }
-                if ($properties.BlockInStatusPage -band 2) {
-                    Write-Host " ESP allow try again: Yes"
-                }
-                if ($properties.BlockInStatusPage -band 4) {
-                    Write-Host " ESP continue anyway: Yes"
-                }
-            }
-        }
-
-        # Get Delivery Optimization statistics (when available)
-        if (-not $script:useFile) {
-            $stats = Get-DeliveryOptimizationPerfSnapThisMonth
-            if ($stats.DownloadHttpBytes -ne 0) {
-                $peerPct = [math]::Round( ($stats.DownloadLanBytes / $stats.DownloadHttpBytes) * 100 )
-                $ccPct = [math]::Round( ($stats.DownloadCacheHostBytes / $stats.DownloadHttpBytes) * 100 )
-            }
-            else {
-                $peerPct = 0
-                $ccPct = 0
-            }
-            Write-Host "Delivery Optimization statistics:"
-            Write-Host " Total bytes downloaded: $($stats.DownloadHttpBytes)"
-            Write-Host " From peers: $($peerPct)% ($($stats.DownloadLanBytes))"
-            Write-host " From Connected Cache: $($ccPct)% ($($stats.DownloadCacheHostBytes))"
-        }
-
-        # If the ADK is installed, get some key hardware hash info
-        $adkPath = Get-ItemPropertyValue "HKLM:\Software\Microsoft\Windows Kits\Installed Roots" -Name KitsRoot10 -ErrorAction SilentlyContinue
-        $oa3Tool = "$adkPath\Assessment and Deployment Kit\Deployment Tools\$($env:PROCESSOR_ARCHITECTURE)\Licensing\OA30\oa3tool.exe"
-        if ($hash -and (Test-Path $oa3Tool)) {
-            $commandLineArgs = "/decodehwhash:$hash"
-            $output = & "$oa3Tool" $commandLineArgs
-            [xml] $hashXML = $output | Select -skip 8 -First ($output.Count - 12)
-            Write-Host "Hardware information:"
-            Write-Host " Operating system build: " $hashXML.SelectSingleNode("//p[@n='OsBuild']").v
-            Write-Host " Manufacturer: " $hashXML.SelectSingleNode("//p[@n='SmbiosSystemManufacturer']").v
-            Write-Host " Model: " $hashXML.SelectSingleNode("//p[@n='SmbiosSystemProductName']").v
-            Write-Host " Serial number: " $hashXML.SelectSingleNode("//p[@n='SmbiosSystemSerialNumber']").v
-            Write-Host " TPM version: " $hashXML.SelectSingleNode("//p[@n='TPMVersion']").v
-        }
     
         # Process event log info
         ProcessEvents
 
-        # Display the list of policies
-        if ($ShowPolicies) {
-            Write-Host " "
-            Write-Host "POLICIES PROCESSED" -ForegroundColor Magenta   
-            ProcessNodeCache | Format-Table -Wrap
-        }
     
         # Make sure the tracking path exists
         if (Test-Path $path) {
@@ -1119,17 +939,8 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
 
         # Get OSDCloud log files to use for measuring elapsed time, sorted by CreationTime
         $filesOSD = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
-        Where-Object { $_.Name -like "*OSDCloud.log" -or $_.Name -like "SetupComplete.log" } | 
+        Where-Object { $_.Name -like "SetupComplete.log" } | 
         Sort-Object CreationTimeUtc
-
-        # Adjust times for DST in WinPE if the first file is SetupComplete.log
-        if ($filesOSD[0].Name -eq "SetupComplete.log") {
-            $filesOSD[1..$filesOSD.Count] | ForEach-Object {
-                $_.CreationTimeUtc = $_.CreationTimeUtc.AddHours(-1)
-                $_.LastWriteTimeUtc = $_.LastWriteTimeUtc.AddHours(-1)
-            }
-            $filesOSD = $filesOSD | Sort-Object CreationTimeUtc
-        }
 
         # Create starting point in the timeline
         $script:observedTimeline += New-Object PSObject -Property @{
