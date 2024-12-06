@@ -54,7 +54,7 @@ Function Invoke-Setup {
             $Arguments = @(
                 "/SILENT"
                 "/VERYSILENT"
-                "/TASKS=DESKTOPICON"
+                "/TASKS=desktopicon"
             )
 
             $CertFile = Get-ChildItem -Path ".\" -Recurse -File -Include "*.cer"
