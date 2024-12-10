@@ -293,6 +293,7 @@ Shows the policy details as recorded in the NodeCache registry keys, in the orde
 
         # Configure any other global variables
         $script:observedTimeline = @()
+        $script:items = @()
     }
 
     Process {
