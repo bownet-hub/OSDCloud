@@ -858,6 +858,9 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
         # Process event log info
         ProcessEvents
 
+
+        Write-Host "No script $path"
+        Write-Host "Script $script:path"
         
         # Make sure the tracking path exists
         if (Test-Path $script:path) {
