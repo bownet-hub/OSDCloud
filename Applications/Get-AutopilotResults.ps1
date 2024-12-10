@@ -937,7 +937,7 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
 
         # Get OSDCloud log files to use for measuring elapsed time, sorted by CreationTime
         $filesOSD = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
-        Where-Object { $_.Name -like "SetupComplete.log" -or $_.Name -like "*OSDCloud*" } | 
+        Where-Object { $_.Name -like "SetupComplete.log" -or $_.Name -like "*OSDCloud.log" } | 
         Sort-Object CreationTimeUtc
 
         # SetupComplete.log should not be the first created file, modify other file's CreationTime and LastWriteTime
