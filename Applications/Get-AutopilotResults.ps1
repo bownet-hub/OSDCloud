@@ -1,5 +1,3 @@
-
-
 function Get-AutopilotResults {
     param(
         [Parameter(Mandatory = $true)] [string] $AppId,
@@ -861,41 +859,41 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
 
     
         # Make sure the tracking path exists
-        if (Test-Path $path) {
+        if (Test-Path $script:path) {
 
             # Process device ESP sessions
             Write-Host " "
             Write-Host "DEVICE ESP:" -ForegroundColor Magenta
             Write-Host " "
 
-            if (Test-Path "$path\ExpectedPolicies") {
-                [array]$items = Get-ChildItem "$path\ExpectedPolicies"
+            if (Test-Path "$script:path\ExpectedPolicies") {
+                [array]$items = Get-ChildItem "$script:path\ExpectedPolicies"
                 AddDisplay ([ref]$items)
                 $items | ProcessPolicies
             }
-            if (Test-Path "$path\ExpectedMSIAppPackages") {
-                [array]$items = Get-ChildItem "$path\ExpectedMSIAppPackages"
+            if (Test-Path "$script:path\ExpectedMSIAppPackages") {
+                [array]$items = Get-ChildItem "$script:path\ExpectedMSIAppPackages"
                 AddDisplay ([ref]$items)
                 $items | ProcessApps -currentUser "S-0-0-00-0000000000-0000000000-000000000-000" 
             }
-            if (Test-Path "$path\ExpectedModernAppPackages") {
-                [array]$items = Get-ChildItem "$path\ExpectedModernAppPackages"
+            if (Test-Path "$script:path\ExpectedModernAppPackages") {
+                [array]$items = Get-ChildItem "$script:path\ExpectedModernAppPackages"
                 AddDisplay ([ref]$items)
                 $items | ProcessModernApps -currentUser "S-0-0-00-0000000000-0000000000-000000000-000"
             }
-            if (Test-Path "$path\Sidecar") {
-                [array]$items = Get-ChildItem "$path\Sidecar" | ? { $_.Property -match "./Device" -and $_.Name -notmatch "LastLoggedState" }
+            if (Test-Path "$script:path\Sidecar") {
+                [array]$items = Get-ChildItem "$script:path\Sidecar" | ? { $_.Property -match "./Device" -and $_.Name -notmatch "LastLoggedState" }
                 AddDisplay ([ref]$items)
                 $items | ProcessSidecar -currentUser "00000000-0000-0000-0000-000000000000"
             }
-            if (Test-Path "$path\ExpectedSCEPCerts") {
-                [array]$items = Get-ChildItem "$path\ExpectedSCEPCerts"
+            if (Test-Path "$script:path\ExpectedSCEPCerts") {
+                [array]$items = Get-ChildItem "$script:path\ExpectedSCEPCerts"
                 AddDisplay ([ref]$items)
                 $items | ProcessCerts
             }
 
             # Process user ESP sessions
-            Get-ChildItem "$path" | ? { $_.PSChildName.StartsWith("S-") } | % {
+            Get-ChildItem "$script:path" | ? { $_.PSChildName.StartsWith("S-") } | % {
                 $userPath = $_.PSPath
                 $userSid = $_.PSChildName
                 Write-Host " "
@@ -917,7 +915,7 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
                     $items | ProcessModernApps -currentUser $userSid
                 }
                 if (Test-Path "$userPath\Sidecar") {
-                    [array]$items = Get-ChildItem "$path\Sidecar" | ? { $_.Property -match "./User" }
+                    [array]$items = Get-ChildItem "$script:path\Sidecar" | ? { $_.Property -match "./User" }
                     AddDisplay ([ref]$items)
                     $items | ProcessSidecar -currentUser $userSid
                 }
