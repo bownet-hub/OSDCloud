@@ -939,8 +939,17 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
 
         # Get OSDCloud log files to use for measuring elapsed time, sorted by CreationTime
         $filesOSD = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
-        Where-Object { $_.Name -like "SetupComplete.log" } | 
+        Where-Object { $_.Name -like "SetupComplete.log" -or $_.Name -like "*OSDCloud*" } | 
         Sort-Object CreationTimeUtc
+
+        # SetupComplete.log should not be the first created file, modify other file's CreationTime and LastWriteTime
+        while ($filesOSD[0].Name -eq "SetupComplete.log") {
+            for ($i = 1; $i -lt $filesOSD.Count; $i++) {
+                $filesOSD[$i].CreationTimeUtc = $filesOSD[$i].CreationTimeUtc.AddHours(-1)
+                $filesOSD[$i].LastWriteTimeUtc = $filesOSD[$i].LastWriteTimeUtc.AddHours(-1)
+            }
+            $filesOSD = $filesOSD | Sort-Object CreationTimeUtc
+        }
 
         # Create starting point in the timeline
         $script:observedTimeline += New-Object PSObject -Property @{
