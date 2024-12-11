@@ -21,10 +21,7 @@ function Get-AutopilotResults {
     # Remove the header containing sensitive information from the transcript file before emailing
     (Get-Content $LogPath | Select-Object -Skip 18) | Set-Content $LogPath
 
-    # Split the recipients string into an array
-    $recipientsArray = $ToRecipients -split ','
-
-    Send-Email -AppId $AppId -AppSecret $AppSecret -Tenant $Tenant -ToRecipient $ToRecipient -From $From -attachmentPath $LogPath
+    Send-Email -AppId $AppId -AppSecret $AppSecret -Tenant $Tenant -ToRecipients $ToRecipients -From $From -attachmentPath $LogPath
 }
 
 function Send-Email {
