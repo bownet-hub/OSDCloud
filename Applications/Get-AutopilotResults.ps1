@@ -29,7 +29,7 @@ function Send-Email {
         [Parameter(Mandatory = $true)] [string] $AppId,
         [Parameter(Mandatory = $true)] [string] $AppSecret,
         [Parameter(Mandatory = $true)] [string] $Tenant,
-        [Parameter(Mandatory = $true)] [string] $ToRecipient,
+        [Parameter(Mandatory = $true)] [string[]] $ToRecipients,  # Changed to array
         [Parameter(Mandatory = $true)] [string] $From,
         [Parameter(Mandatory = $true)] [string] $attachmentPath
     )
@@ -74,19 +74,22 @@ function Send-Email {
                         ContentBytes  = $attachmentEncoded
                     }
                 )
-                toRecipients = @(
-                    @{
-                        emailAddress = @{
-                            address = $ToRecipient
-                        }
-                    }
-                )
+                toRecipients = @()  # Initialize as empty array
             }
             saveToSentItems = $false
         }
         
+        # Add each recipient to the toRecipients array
+        foreach ($recipient in $ToRecipients) {
+            $message.message.toRecipients += @{
+                emailAddress = @{
+                    address = $recipient
+                }
+            }
+        }
+        
         # Send the email
-        Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/users/$from/sendMail" -Method Post -Headers @{
+        Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/users/$From/sendMail" -Method Post -Headers @{
             Authorization  = "Bearer $accessToken"
             "Content-Type" = "application/json"
         } -Body ($message | ConvertTo-Json -Depth 10)
