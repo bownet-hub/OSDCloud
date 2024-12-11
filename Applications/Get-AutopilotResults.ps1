@@ -3,7 +3,7 @@ function Get-AutopilotResults {
         [Parameter(Mandatory = $true)] [string] $AppId,
         [Parameter(Mandatory = $true)] [string] $AppSecret,
         [Parameter(Mandatory = $true)] [string] $Tenant,
-        [Parameter(Mandatory = $true)] [string[]] $ToRecipients,  # Changed to array
+        [Parameter(Mandatory = $true)] [string] $ToRecipients,  # Single string
         [Parameter(Mandatory = $true)] [string] $From
     )
 
@@ -21,7 +21,10 @@ function Get-AutopilotResults {
     # Remove the header containing sensitive information from the transcript file before emailing
     (Get-Content $LogPath | Select-Object -Skip 18) | Set-Content $LogPath
 
-    Send-Email -AppId $AppId -AppSecret $AppSecret -Tenant $Tenant -ToRecipients $ToRecipients -From $From -attachmentPath $LogPath
+    # Split the recipients string into an array
+    $recipientsArray = $ToRecipients -split ','
+
+    Send-Email -AppId $AppId -AppSecret $AppSecret -Tenant $Tenant -ToRecipients $recipientsArray -From $From -attachmentPath $LogPath
 }
 
 function Send-Email {
@@ -29,7 +32,7 @@ function Send-Email {
         [Parameter(Mandatory = $true)] [string] $AppId,
         [Parameter(Mandatory = $true)] [string] $AppSecret,
         [Parameter(Mandatory = $true)] [string] $Tenant,
-        [Parameter(Mandatory = $true)] [string[]] $ToRecipients,  # Changed to array
+        [Parameter(Mandatory = $true)] [string[]] $ToRecipients,  # Array
         [Parameter(Mandatory = $true)] [string] $From,
         [Parameter(Mandatory = $true)] [string] $attachmentPath
     )
