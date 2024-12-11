@@ -3,7 +3,7 @@ function Get-AutopilotResults {
         [Parameter(Mandatory = $true)] [string] $AppId,
         [Parameter(Mandatory = $true)] [string] $AppSecret,
         [Parameter(Mandatory = $true)] [string] $Tenant,
-        [Parameter(Mandatory = $true)] [string] $ToRecipient,
+        [Parameter(Mandatory = $true)] [string[]] $ToRecipients,  # Changed to array
         [Parameter(Mandatory = $true)] [string] $From
     )
 
