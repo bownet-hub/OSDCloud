@@ -3,7 +3,7 @@ function Get-AutopilotResults {
         [Parameter(Mandatory = $true)] [string] $AppId,
         [Parameter(Mandatory = $true)] [string] $AppSecret,
         [Parameter(Mandatory = $true)] [string] $Tenant,
-        [Parameter(Mandatory = $true)] [string] $ToRecipients,  # Single string
+        [Parameter(Mandatory = $true)] [string] $ToRecipients, # Single string
         [Parameter(Mandatory = $true)] [string] $From
     )
 
@@ -32,7 +32,7 @@ function Send-Email {
         [Parameter(Mandatory = $true)] [string] $AppId,
         [Parameter(Mandatory = $true)] [string] $AppSecret,
         [Parameter(Mandatory = $true)] [string] $Tenant,
-        [Parameter(Mandatory = $true)] [string[]] $ToRecipients,  # Array
+        [Parameter(Mandatory = $true)] [string[]] $ToRecipients, # Array
         [Parameter(Mandatory = $true)] [string] $From,
         [Parameter(Mandatory = $true)] [string] $attachmentPath
     )
@@ -952,38 +952,64 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
         # Get OSDCloud log files to use for measuring elapsed time, sorted by CreationTime
         $filesOSD = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
         Where-Object { $_.Name -like "SetupComplete.log" -or $_.Name -like "*OSDCloud.log" } | 
-        Sort-Object CreationTimeUtc
+        Sort-Object CreationTime
 
         # SetupComplete.log should not be the first created file, modify other file's CreationTime and LastWriteTime
         while ($filesOSD[0].Name -eq "SetupComplete.log") {
             for ($i = 1; $i -lt $filesOSD.Count; $i++) {
-                $filesOSD[$i].CreationTimeUtc = $filesOSD[$i].CreationTimeUtc.AddHours(-1)
-                $filesOSD[$i].LastWriteTimeUtc = $filesOSD[$i].LastWriteTimeUtc.AddHours(-1)
+                $filesOSD[$i].CreationTime = $filesOSD[$i].CreationTime.AddHours(-1)
+                $filesOSD[$i].LastWriteTime = $filesOSD[$i].LastWriteTime.AddHours(-1)
             }
-            $filesOSD = $filesOSD | Sort-Object CreationTimeUtc
+            $filesOSD = $filesOSD | Sort-Object CreationTime
+        }
+     
+
+        # Convert dates to UTC and sort
+        foreach ($item in $observedTimeline) {
+            $item.Date = $item.Date.ToUniversalTime()
+        }
+        $observedTimeline = $observedTimeline | Sort-Object -Property Date
+
+        foreach ($item in $filesOSD) {
+            $item.CreationTime = $item.CreationTime.ToUniversalTime()
+            $item.LastWriteTime = $item.LastWriteTime.ToUniversalTime()
+        }
+
+        # Calculate the initial time difference in hours
+        $timeDifference = ($observedTimeline[0].Date - $filesOSD[-1].LastWriteTime).TotalHours
+
+        # Determine the adjustment direction based on the time difference
+        $adjustment = if ($timeDifference -gt 1) { -1 } else { 1 }
+
+        # Loop until the absolute time difference is within one hour
+        while (([math]::Abs($timeDifference) -gt 0) -and ($observedTimeline[0].Date -lt $filesOSD[-1].LastWriteTime)) {
+            foreach ($item in $observedTimeline) {
+       
+                # Adjust the file date
+                $item.Date = $item.Date.AddHours($adjustment)
+            }
+            # Recalculate the time difference after adjustment
+            $timeDifference = ($observedTimeline[0].Date - $filesOSD[-1].LastWriteTime).TotalHours
         }
 
         # Create starting point in the timeline
-        $script:observedTimeline += New-Object PSObject -Property @{
-            "Date"     = $filesOSD[0].CreationTimeUtc
+        $observedTimeline += New-Object PSObject -Property @{
+            "Date"     = $filesOSD[0].CreationTime
             "Detail"   = "Start Deployment"
             "Duration" = [TimeSpan]::Zero
         }
 
         # Process each log file and add to the timeline
         foreach ($file in $filesOSD) {
-            $script:observedTimeline += New-Object PSObject -Property @{
-                Date     = $file.LastWriteTimeUtc
+            $observedTimeline += New-Object PSObject -Property @{
+                Date     = $file.LastWriteTime
                 Detail   = "OSDCloud $($file.BaseName)"
                 Duration = [TimeSpan]::Zero
                 Status   = "Completed"
             }
         }
 
-        # Convert dates to UTC and sort
-        foreach ($item in $observedTimeline) {
-            $item.Date = $item.Date.ToUniversalTime()
-        }
+
         $observedTimeline = $observedTimeline | Sort-Object -Property Date
 
         # Calculate durations between events
@@ -1000,7 +1026,7 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
         # Display the timeline
         $observedTimeline | Format-Table @{
             Label      = "Date"
-            Expression = { $_.Date.ToUniversalTime().ToString("G") }
+            Expression = { $_.Date.ToString("G") }
         }, @{
             Label      = "Duration"
             Expression = { $_.Duration.ToString("mm' minutes 'ss' seconds'") }
