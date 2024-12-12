@@ -868,7 +868,12 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
         # Troubleshooting, to be removed
         Write-Host "No script $path"
         Write-Host "Script $script:path"
-        Get-ChildItem "$script:path"
+        Write-Host "Autopilot"
+        Get-ChildItem "HKLM:\Software\Microsoft\Windows\Autopilot"
+        Write-Host "EnrollmentStatusTracking"
+        Get-ChildItem "HKLM:\Software\Microsoft\Windows\Autopilot\EnrollmentStatusTracking"
+        Write-Host "ESPTrackingInfo"
+        Get-ChildItem "HKLM:\Software\Microsoft\Windows\Autopilot\EnrollmentStatusTracking\ESPTrackingInfo"
 
         
         
