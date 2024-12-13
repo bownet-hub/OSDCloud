@@ -950,62 +950,46 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
         Write-Host "OBSERVED TIMELINE:" -ForegroundColor Magenta
         Write-Host ""
 
-# Get OSDCloud log files to use for measuring elapsed time, sorted by CreationTime
-$filesOSD = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
-Where-Object { $_.Name -like "SetupComplete.log" -or $_.Name -like "*OSDCloud.log" } | 
-Sort-Object CreationTime
+        # Get OSDCloud log files to use for measuring elapsed time, sorted by CreationTime
+        $filesOSD = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
+        Where-Object { $_.Name -like "SetupComplete.log" -or $_.Name -like "*OSDCloud.log" } | 
+        Sort-Object CreationTime
 
-# Output initial file times for debugging
-Write-Output "Initial File Times:"
-$filesOSD | ForEach-Object { Write-Output "$($_.Name) - $($_.CreationTime)" }
 
-# SetupComplete.log should not be the first created file, modify other file's CreationTime and LastWriteTime
-while ($filesOSD[0].Name -eq "SetupComplete.log") {
-    for ($i = 1; $i -lt $filesOSD.Count; $i++) {
-        $filesOSD[$i].CreationTime = $filesOSD[$i].CreationTime.AddHours(-1)
-        $filesOSD[$i].LastWriteTime = $filesOSD[$i].LastWriteTime.AddHours(-1)
-    }
-    $filesOSD = $filesOSD | Sort-Object CreationTime
+        # SetupComplete.log should not be the first created file, modify other file's CreationTime and LastWriteTime
+        while ($filesOSD[0].Name -eq "SetupComplete.log") {
+            for ($i = 1; $i -lt $filesOSD.Count; $i++) {
+                $filesOSD[$i].CreationTime = $filesOSD[$i].CreationTime.AddHours(-1)
+                $filesOSD[$i].LastWriteTime = $filesOSD[$i].LastWriteTime.AddHours(-1)
+            }
+            $filesOSD = $filesOSD | Sort-Object CreationTime
+        }
 
-    # Output adjusted file times for debugging
-    Write-Output "Adjusted File Times:"
-    $filesOSD | ForEach-Object { Write-Output "$($_.Name) - $($_.CreationTime)" }
-}
+        # Convert dates to UTC and sort
+        $observedTimeline = $observedTimeline | ForEach-Object {
+            $_.Date = [System.TimeZoneInfo]::ConvertTimeToUtc($_.Date)
+            $_
+        } | Sort-Object -Property Date
 
-# Convert dates to UTC and sort
-$observedTimeline = $observedTimeline | ForEach-Object {
-    $_.Date = [System.TimeZoneInfo]::ConvertTimeToUtc($_.Date)
-    $_
-} | Sort-Object -Property Date
+        $filesOSD = $filesOSD | ForEach-Object {
+            $_.CreationTime = [System.TimeZoneInfo]::ConvertTimeToUtc($_.CreationTime)
+            $_.LastWriteTime = [System.TimeZoneInfo]::ConvertTimeToUtc($_.LastWriteTime)
+            $_
+        }
 
-$filesOSD = $filesOSD | ForEach-Object {
-    $_.CreationTime = [System.TimeZoneInfo]::ConvertTimeToUtc($_.CreationTime)
-    $_.LastWriteTime = [System.TimeZoneInfo]::ConvertTimeToUtc($_.LastWriteTime)
-    $_
-}
+        # Calculate the initial time difference in hours
+        $timeDifference = ($observedTimeline[0].Date - $filesOSD[-1].LastWriteTime).TotalHours
 
-# Output converted times for debugging
-Write-Output "Converted Observed Timeline:"
-$observedTimeline | ForEach-Object { Write-Output "$($_.Date)" }
+        # Determine the adjustment direction based on the time difference
+        $adjustment = if ($timeDifference -gt 1) { -1 } else { 1 }
 
-Write-Output "Converted File Times:"
-$filesOSD | ForEach-Object { Write-Output "$($_.Name) - $($_.CreationTime)" }
-
-# Calculate the initial time difference in hours
-$timeDifference = ($observedTimeline[0].Date - $filesOSD[-1].LastWriteTime).TotalHours
-Write-Output "Initial Time Difference: $timeDifference hours"
-
-# Determine the adjustment direction based on the time difference
-$adjustment = if ($timeDifference -gt 1) { -1 } else { 1 }
-
-# Loop until the absolute time difference is within one hour
-while (([math]::Abs($timeDifference) -gt 1) -or ($observedTimeline[0].Date -lt $filesOSD[-1].LastWriteTime)) {
-    foreach ($item in $observedTimeline) {
-        $item.Date = $item.Date.AddHours($adjustment)
-    }
-    $timeDifference = ($observedTimeline[0].Date - $filesOSD[-1].LastWriteTime).TotalHours
-    Write-Output "Adjusted Time Difference: $timeDifference hours"
-}
+        # Loop until the absolute time difference is within one hour
+        while (([math]::Abs($timeDifference) -gt 1) -or ($observedTimeline[0].Date -lt $filesOSD[-1].LastWriteTime)) {
+            foreach ($item in $observedTimeline) {
+                $item.Date = $item.Date.AddHours($adjustment)
+            }
+            $timeDifference = ($observedTimeline[0].Date - $filesOSD[-1].LastWriteTime).TotalHours
+        }
 
         # Create starting point in the timeline
         $observedTimeline += New-Object PSObject -Property @{
