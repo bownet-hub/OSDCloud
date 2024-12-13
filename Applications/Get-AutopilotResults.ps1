@@ -860,18 +860,8 @@ Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
             $script:policies = Get-MgBetaDeviceManagementConfigurationPolicy -All
         }
 
-
         # Process event log info
-        ProcessEvents
-
-
-
-        # Troubleshooting, to be removed
-        Write-Host "No script $path"
-        Write-Host "Script $script:path"
-        Get-ChildItem "$script:path"
-
-        
+        ProcessEvents       
         
         # Make sure the tracking path exists
         if (Test-Path $script:path) {
