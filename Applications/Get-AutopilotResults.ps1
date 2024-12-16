@@ -7,7 +7,7 @@ function Get-AutopilotResults {
         [Parameter(Mandatory = $true)] [string] $From
     )
 
-    $LogPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutopilotLog2.log"
+    $LogPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutopilotLog.log"
 
     # Start logging
     Start-Transcript -Path $LogPath
