@@ -2,80 +2,80 @@ Function Invoke-Setup {
     Param(
         [Parameter(Mandatory = $true, Position = 1, HelpMessage = "Application")]
         [ValidateNotNullOrEmpty()]
-        [string]$AppName,
+        [string]$appName,
 
         [Parameter(Position = 2, HelpMessage = "Install or Uninstall")]
         [ValidateSet("Install", "Uninstall")]
-        [string]$Invoke = 'Install')
+        [string]$invoke = 'Install'
+    )
 
-    $DefaultPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs"
-    $LogPath = "$DefaultPath\$AppName.txt"
+    $defaultPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs"
+    $logPath = "$defaultPath\$appName.txt"
 
-    #Start logging
-    Start-Transcript -Path "$LogPath" -Append
+    # Start logging
+    Start-Transcript -Path "$logPath" -Append
     $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
     Write-Host "$(Get-Date -Format $dtFormat)"
 
-    #Add other applications and install parameters
-    #RingCentral
-    if ($AppName -like "*RingCentral*") {
-        if ($Invoke -eq "Install") {
-            Write-Host "Installing $AppName"
+    # Add other applications and install parameters
+    # RingCentral
+    if ($appName -like "*RingCentral*") {
+        if ($invoke -eq "Install") {
+            Write-Host "Installing $appName"
 
-            $InstallerPath = "$DefaultPath\$AppName.msi"
-            $Installer = "C:\Windows\System32\msiexec.exe"
+            $installerPath = "$defaultPath\$appName.msi"
+            $installer = "C:\Windows\System32\msiexec.exe"
 
             $url = "https://downloads.ringcentral.com/sp/RingCentralForWindows"
             Write-Host "URL to download the installer: $url"
 
-            $Arguments = @(
+            $arguments = @(
                 "/i"
-                "$InstallerPath"
+                "$installerPath"
                 "ALLUSERS=1"
                 "/qn"
             )
 
             Install
         }
-        elseif ($Invoke -eq "Uninstall") {
-            Write-Host "Uninstalling $AppName"
+        elseif ($invoke -eq "Uninstall") {
+            Write-Host "Uninstalling $appName"
             Uninstall-Advanced
         }
     }
 
-    #WatchGuard SSL VPN
-    elseif ($AppName -like "*Watchguard*") {
-        if ($Invoke -eq "Install") {
-            Write-Host "Installing $AppName"
+    # WatchGuard SSL VPN
+    elseif ($appName -like "*Watchguard*") {
+        if ($invoke -eq "Install") {
+            Write-Host "Installing $appName"
 
-            $Installer = Get-ChildItem -Path ".\" -Recurse -File -Include "*.exe"
-            Write-Host "Use included installer $Installer"
+            $installer = Get-ChildItem -Path ".\" -Recurse -File -Include "*.exe"
+            Write-Host "Use included installer $installer"
 
-            $Arguments = @(
+            $arguments = @(
                 "/SILENT"
                 "/VERYSILENT"
                 "/TASKS=desktopicon"
             )
 
-            $CertFile = Get-ChildItem -Path ".\" -Recurse -File -Include "*.cer"
-            if ($null -ne $CertFile) {
-                if (Test-Path "$CertFile") { 
+            $certFile = Get-ChildItem -Path ".\" -Recurse -File -Include "*.cer"
+            if ($null -ne $certFile) {
+                if (Test-Path "$certFile") { 
                     Write-Host "Install included certificate"
-                    Import-Certificate -FilePath $CertFile -CertStoreLocation Cert:\LocalMachine\TrustedPublisher
+                    Import-Certificate -FilePath $certFile -CertStoreLocation Cert:\LocalMachine\TrustedPublisher
 
                     Install
                 }
             }
             else {
-                
                 Write-Host "Certificate not present"
             }
         }
-        elseif ($Invoke -eq "Uninstall") {
-            Write-Host "Uninstalling $AppName"
-            $Installer = "C:\Program Files (x86)\WatchGuard\WatchGuard Mobile VPN with SSL\unins000.EXE"
+        elseif ($invoke -eq "Uninstall") {
+            Write-Host "Uninstalling $appName"
+            $installer = "C:\Program Files (x86)\WatchGuard\WatchGuard Mobile VPN with SSL\unins000.EXE"
 
-            $Arguments = @(
+            $arguments = @(
                 "/VERYSILENT"
                 "/NORESTART"
             )
@@ -84,26 +84,26 @@ Function Invoke-Setup {
     }
 
     else {
-        Write-Host "$AppName is not a valid application"
+        Write-Host "$appName is not a valid application"
     }
 }
 
 Function Install {
-    #Run the Install if in Install Mode
+    # Run the Install if in Install Mode
     if ($url) {
-        Write-Host "Downloading the installer to $InstallerPath"
+        Write-Host "Downloading the installer to $installerPath"
         $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri $url -OutFile "$InstallerPath" -UseBasicParsing -Verbose
-        if (!(Test-Path "$InstallerPath")) {
+        Invoke-WebRequest -Uri $url -OutFile "$installerPath" -UseBasicParsing -Verbose
+        if (!(Test-Path "$installerPath")) {
             Write-Host "Did not download, Exit Script"
             exit 1
         }
     }
 
-    if ($null -ne $Installer) {
-        if (Test-Path "$Installer") { 
-            Write-Host "Starting install using $Installer $Arguments"
-            Start-Process "$Installer" -ArgumentList $Arguments -Wait
+    if ($null -ne $installer) {
+        if (Test-Path "$installer") { 
+            Write-Host "Starting install using $installer $arguments"
+            Start-Process "$installer" -ArgumentList $arguments -Wait
             Write-Host "Software install finished"
         }
     }
@@ -111,26 +111,26 @@ Function Install {
         Write-Host "Installer not found"
     }
 
-    #Remove the Installer
-    if ($null -ne $InstallerPath) {
-        if (Test-Path "$InstallerPath") {
+    # Remove the Installer
+    if ($null -ne $installerPath) {
+        if (Test-Path "$installerPath") {
             Start-Sleep -Seconds 2
             Write-Host "Delete installer"
-            Remove-Item "$InstallerPath"
+            Remove-Item "$installerPath"
         }
     }
     Write-Host "$(Get-Date -Format $dtFormat)"
 }
 
 Function Uninstall {
-    Write-Host "Uninstall using $Installer $Arguments"
+    Write-Host "Uninstall using $installer $arguments"
     Write-Host "Stop any of the applications that may be running"
-    Get-Process | Where-Object { $_.Company -like "*$AppName*" -or $_.Path -like "*$AppName*" } | Stop-Process -ErrorAction Ignore -Force
-    if (!(Test-Path "$Installer")) {
+    Get-Process | Where-Object { $_.Company -like "*$appName*" -or $_.Path -like "*$appName*" } | Stop-Process -ErrorAction Ignore -Force
+    if (!(Test-Path "$installer")) {
         Write-Host "File does not exist"
     }
-    elseif (Test-Path "$Installer") {
-        Start-Process "$Installer" -ArgumentList $Arguments -Wait   
+    elseif (Test-Path "$installer") {
+        Start-Process "$installer" -ArgumentList $arguments -Wait   
     }
 
     Write-Host "Uninstall complete" 
@@ -139,10 +139,10 @@ Function Uninstall {
 
 Function Uninstall-Advanced {
     Write-Host "Stop any of the applications that may be running"
-    Get-Process | Where-Object { $_.Company -like "*$AppName*" -or $_.Path -like "*$AppName*" } | Stop-Process -ErrorAction Ignore -Force
+    Get-Process | Where-Object { $_.Company -like "*$appName*" -or $_.Path -like "*$appName*" } | Stop-Process -ErrorAction Ignore -Force
 
-    #Uninstall any installed applications that the administrator can remove
-    foreach ($app in (Get-WmiObject -Class Win32_Product | Where-Object { $_.Vendor -like "*$AppName*" })) {
+    # Uninstall any installed applications that the administrator can remove
+    foreach ($app in (Get-WmiObject -Class Win32_Product | Where-Object { $_.Vendor -like "*$appName*" })) {
         Write-Host "Attempting to uninstall $($app)"
         Try {
             $app.Uninstall() | Out-Null 
@@ -157,7 +157,7 @@ Function Uninstall-Advanced {
         "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall")
     foreach ($path in $paths) {
         if (Test-Path($path)) {
-            $list = Get-ItemProperty "$path\*" | Where-Object { $_.DisplayName -like "*$AppName*" } | Select-Object -Property PSPath, UninstallString
+            $list = Get-ItemProperty "$path\*" | Where-Object { $_.DisplayName -like "*$appName*" } | Select-Object -Property PSPath, UninstallString
             foreach ($regkey in $list) {
                 Write-Host "Examining Registry Key $($regkey.PSpath)"
                 Try {
@@ -167,11 +167,11 @@ Function Uninstall-Advanced {
                         if ($cmd -notlike "*/X*") { 
                             Write-Host "No /X flag - this isn't for uninstalling"
                             $cmd = "" 
-                        } #don't do anything if it's not an uninstall
+                        } # don't do anything if it's not an uninstall
                         elseif ($cmd -notlike "*/qn*") { 
                             Write-Host "Adding /qn flag to try and uninstall quietly"
                             $cmd = "$cmd /qn" 
-                        } #don't display UI
+                        } # don't display UI
                     }
                     if ($cmd) {
                         Write-Host "Executing $($cmd)"
@@ -183,7 +183,7 @@ Function Uninstall-Advanced {
                     Write-Host "$_"
                 }
             }
-            $list = Get-ItemProperty "$path\*" | Where-Object { $_.DisplayName -like "*$AppName*" } | Select-Object -Property PSPath
+            $list = Get-ItemProperty "$path\*" | Where-Object { $_.DisplayName -like "*$appName*" } | Select-Object -Property PSPath
             foreach ($regkey in $list) {
                 Write-Host "Removing Registry Key $($regkey.PSpath)"
                 Try {
