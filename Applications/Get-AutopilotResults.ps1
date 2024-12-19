@@ -1,57 +1,57 @@
 function Get-AutopilotResults {
     param(
-        [Parameter(Mandatory = $true)] [string] $AppId,
-        [Parameter(Mandatory = $true)] [string] $AppSecret,
-        [Parameter(Mandatory = $true)] [string] $Tenant,
-        [Parameter(Mandatory = $true)] [string] $ToRecipients, # Single string
-        [Parameter(Mandatory = $true)] [string] $From
+        [Parameter(Mandatory = $true)] [string] $appId,
+        [Parameter(Mandatory = $true)] [string] $appSecret,
+        [Parameter(Mandatory = $true)] [string] $tenant,
+        [Parameter(Mandatory = $true)] [string] $toRecipients, # Single string
+        [Parameter(Mandatory = $true)] [string] $from
     )
 
-    $LogPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutopilotLog.log"
+    $logPath = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutopilotLog.log"
 
     # Start logging
-    Start-Transcript -Path $LogPath
+    Start-Transcript -Path $logPath
     $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
     Write-Host "$(Get-Date -Format $dtFormat)"
 
-    Get-AutopilotDiagnosticInfo -Online -Tenant $Tenant -AppId $AppId -AppSecret $AppSecret
+    Get-AutopilotDiagnosticInfo -Online -Tenant $tenant -AppId $appId -AppSecret $appSecret
 
     Stop-Transcript
 
     # Remove the header containing sensitive information from the transcript file before emailing
-    (Get-Content $LogPath | Select-Object -Skip 18) | Set-Content $LogPath
+    (Get-Content $logPath | Select-Object -Skip 18) | Set-Content $logPath
 
     # Split the recipients string into an array
-    $recipientsArray = $ToRecipients -split ','
+    $recipientsArray = $toRecipients -split ','
 
-    Send-Email -AppId $AppId -AppSecret $AppSecret -Tenant $Tenant -ToRecipients $recipientsArray -From $From -attachmentPath $LogPath
+    Send-Email -AppId $appId -AppSecret $appSecret -Tenant $tenant -ToRecipients $recipientsArray -From $from -AttachmentPath $logPath
 }
 
 function Send-Email {
     param(
-        [Parameter(Mandatory = $true)] [string] $AppId,
-        [Parameter(Mandatory = $true)] [string] $AppSecret,
-        [Parameter(Mandatory = $true)] [string] $Tenant,
-        [Parameter(Mandatory = $true)] [string[]] $ToRecipients, # Array
-        [Parameter(Mandatory = $true)] [string] $From,
+        [Parameter(Mandatory = $true)] [string] $appId,
+        [Parameter(Mandatory = $true)] [string] $appSecret,
+        [Parameter(Mandatory = $true)] [string] $tenant,
+        [Parameter(Mandatory = $true)] [string[]] $toRecipients, # Array
+        [Parameter(Mandatory = $true)] [string] $from,
         [Parameter(Mandatory = $true)] [string] $attachmentPath
     )
     
     try {
-        $ComputerName = (Get-ComputerInfo).csname
-        $BiosSerialNumber = Get-MyBiosSerialNumber
-        $ComputerManufacturer = Get-MyComputerManufacturer
-        $ComputerModel = Get-MyComputerModel
+        $computerName = (Get-ComputerInfo).csname
+        $biosSerialNumber = Get-MyBiosSerialNumber
+        $computerManufacturer = Get-MyComputerManufacturer
+        $computerModel = Get-MyComputerModel
         
         # Get the access token
         $body = @{
-            client_id     = $AppId
+            client_id     = $appId
             scope         = "https://graph.microsoft.com/.default"
-            client_secret = $AppSecret
+            client_secret = $appSecret
             grant_type    = "client_credentials"
         }
         
-        $response = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$Tenant/oauth2/v2.0/token" -Method Post -ContentType "application/x-www-form-urlencoded" -Body $body
+        $response = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenant/oauth2/v2.0/token" -Method Post -ContentType "application/x-www-form-urlencoded" -Body $body
         $accessToken = $response.access_token
         
         # Read the attachment as a byte array
@@ -61,19 +61,19 @@ function Send-Email {
         # Create the message
         $message = @{
             message         = @{
-                subject      = "Autopilot Completed for $ComputerName"
+                subject      = "Autopilot Completed for $computerName"
                 body         = @{
                     contentType = "Text"
                     content     = "The following client has been successfully deployed:
-                          Computer Name: $ComputerName
-                          BIOS Serial Number: $BiosSerialNumber
-                          Computer Manufacturer: $($ComputerManufacturer)
-                          Computer Model: $($ComputerModel)"
+                          Computer Name: $computerName
+                          BIOS Serial Number: $biosSerialNumber
+                          Computer Manufacturer: $($computerManufacturer)
+                          Computer Model: $($computerModel)"
                 }
                 attachments  = @(
                     @{
                         "@odata.type" = "#microsoft.graph.fileAttachment"
-                        Name          = "Autopilot-$ComputerName.txt"
+                        Name          = "Autopilot-$computerName.txt"
                         ContentBytes  = $attachmentEncoded
                     }
                 )
@@ -83,7 +83,7 @@ function Send-Email {
         }
         
         # Add each recipient to the toRecipients array
-        foreach ($recipient in $ToRecipients) {
+        foreach ($recipient in $toRecipients) {
             $message.message.toRecipients += @{
                 emailAddress = @{
                     address = $recipient
@@ -92,7 +92,7 @@ function Send-Email {
         }
         
         # Send the email
-        Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/users/$From/sendMail" -Method Post -Headers @{
+        Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/users/$from/sendMail" -Method Post -Headers @{
             Authorization  = "Bearer $accessToken"
             "Content-Type" = "application/json"
         } -Body ($message | ConvertTo-Json -Depth 10)
@@ -101,7 +101,6 @@ function Send-Email {
         Write-Error "Failed to send email: $_"
     }
 }
-
 function Get-AutopilotDiagnosticInfo {
     <#PSScriptInfo
  
