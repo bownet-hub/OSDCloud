@@ -1,3 +1,20 @@
+<#
+.SYNOPSIS
+    This script sets up and manages the installation and uninstallation of applications.
+.DESCRIPTION
+    The script includes functions to install and uninstall applications like RingCentral and WatchGuard SSL VPN.
+    It handles logging, downloading installers, and managing certificates.
+.PARAMETER appName
+    The name of the application to install or uninstall.
+.PARAMETER invoke
+    Specifies whether to install or uninstall the application. Valid values are 'Install' and 'Uninstall'.
+.EXAMPLE
+    Invoke-Setup -appName "RingCentral" -invoke "Install"
+    This command installs the RingCentral application.
+.EXAMPLE
+    Invoke-Setup -appName "Watchguard" -invoke "Uninstall"
+    This command uninstalls the WatchGuard SSL VPN application.
+#>
 Function Invoke-Setup {
     Param(
         [Parameter(Mandatory = $true, Position = 1, HelpMessage = "Application")]
@@ -39,7 +56,12 @@ Function Invoke-Setup {
     }
 }
 
-# Function to install RingCentral application
+<#
+.SYNOPSIS
+    Installs the RingCentral application.
+.DESCRIPTION
+    Downloads the RingCentral installer and installs the application.
+#>
 Function Install-RingCentral {
     Write-Host "Installing $appName"
     $installerPath = "$defaultPath\$appName.msi"
@@ -57,7 +79,12 @@ Function Install-RingCentral {
     Install-Application -url $url -installerPath $installerPath -installer $installer -arguments $arguments
 }
 
-# Function to install WatchGuard SSL VPN application
+<#
+.SYNOPSIS
+    Installs the WatchGuard SSL VPN application.
+.DESCRIPTION
+    Uses the included installer to install the WatchGuard SSL VPN application.
+#>
 Function Install-WatchGuard {
     Write-Host "Installing $appName"
     $installer = Get-ChildItem -Path ".\" -Recurse -File -Include "*.exe"
@@ -81,7 +108,20 @@ Function Install-WatchGuard {
     }
 }
 
-# Function to handle the installation process
+<#
+.SYNOPSIS
+    Handles the installation process for applications.
+.DESCRIPTION
+    Downloads the installer if a URL is provided, runs the installer, and deletes the installer file after installation.
+.PARAMETER url
+    The URL to download the installer from.
+.PARAMETER installerPath
+    The path to save the downloaded installer.
+.PARAMETER installer
+    The path to the installer executable.
+.PARAMETER arguments
+    The arguments to pass to the installer.
+#>
 Function Install-Application {
     Param(
         [string]$url,
@@ -124,7 +164,12 @@ Function Install-Application {
     }
 }
 
-# Function to uninstall WatchGuard SSL VPN application
+<#
+.SYNOPSIS
+    Uninstalls the WatchGuard SSL VPN application.
+.DESCRIPTION
+    Uses the included uninstaller to uninstall the WatchGuard SSL VPN application.
+#>
 Function Uninstall-WatchGuard {
     Write-Host "Uninstalling $appName"
     $installer = "C:\Program Files (x86)\WatchGuard\WatchGuard Mobile VPN with SSL\unins000.EXE"
@@ -135,7 +180,16 @@ Function Uninstall-WatchGuard {
     Uninstall-Application -installer $installer -arguments $arguments
 }
 
-# Function to handle the uninstallation process
+<#
+.SYNOPSIS
+    Handles the uninstallation process for applications.
+.DESCRIPTION
+    Stops any running applications, runs the uninstaller, and logs the uninstallation process.
+.PARAMETER installer
+    The path to the uninstaller executable.
+.PARAMETER arguments
+    The arguments to pass to the uninstaller.
+#>
 Function Uninstall-Application {
     Param(
         [string]$installer,
@@ -159,7 +213,12 @@ Function Uninstall-Application {
     }
 }
 
-# Function to handle advanced uninstallation process
+<#
+.SYNOPSIS
+    Handles the advanced uninstallation process for applications.
+.DESCRIPTION
+    Stops any running applications, uninstalls any installed applications, and removes system uninstall keys.
+#>
 Function Uninstall-Advanced {
     try {
         Write-Host "Stopping any running applications"
