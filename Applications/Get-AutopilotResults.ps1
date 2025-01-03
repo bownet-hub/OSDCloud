@@ -14,6 +14,17 @@ function Get-AutopilotResults {
     $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
     Write-Host "$(Get-Date -Format $dtFormat)"
 
+    # Get OSDCloud logs to attach
+    $logOSDCloud = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
+        Where-Object { $_.Name -like "SetupComplete.log" }
+
+    # Get Lenovo ThinInstaller logs to attach
+    $logLenovo = Get-ChildItem -Path "C:\Program Files (x86)\Lenovo\ThinInstaller\logs" -Recurse -File | 
+        Where-Object { $_.Name -like "*Installation.log" }
+
+    # Combine all log paths into an array
+    $attachmentPaths = @($logPath, $logOSDCloud.FullName, $logLenovo.FullName)
+
     Get-AutopilotDiagnosticInfo -Online -Tenant $tenant -AppId $appId -AppSecret $appSecret
 
     Stop-Transcript
@@ -24,7 +35,7 @@ function Get-AutopilotResults {
     # Split the recipients string into an array
     $recipientsArray = $toRecipients -split ','
 
-    Send-Email -AppId $appId -AppSecret $appSecret -Tenant $tenant -ToRecipients $recipientsArray -From $from -AttachmentPath $logPath
+    Send-Email -AppId $appId -AppSecret $appSecret -Tenant $tenant -ToRecipients $recipientsArray -From $from -AttachmentPaths $attachmentPaths
 }
 
 function Send-Email {
@@ -34,7 +45,7 @@ function Send-Email {
         [Parameter(Mandatory = $true)] [string] $tenant,
         [Parameter(Mandatory = $true)] [string[]] $toRecipients, # Array
         [Parameter(Mandatory = $true)] [string] $from,
-        [Parameter(Mandatory = $true)] [string] $attachmentPath
+        [Parameter(Mandatory = $true)] [string[]] $attachmentPaths # Array of attachment paths
     )
     
     try {
@@ -54,10 +65,6 @@ function Send-Email {
         $response = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenant/oauth2/v2.0/token" -Method Post -ContentType "application/x-www-form-urlencoded" -Body $body
         $accessToken = $response.access_token
         
-        # Read the attachment as a byte array
-        $attachmentBytes = [System.IO.File]::ReadAllBytes($attachmentPath)
-        $attachmentEncoded = [System.Convert]::ToBase64String($attachmentBytes)
-        
         # Create the message
         $message = @{
             message         = @{
@@ -70,16 +77,23 @@ function Send-Email {
                           Computer Manufacturer: $($computerManufacturer)
                           Computer Model: $($computerModel)"
                 }
-                attachments  = @(
-                    @{
-                        "@odata.type" = "#microsoft.graph.fileAttachment"
-                        Name          = "Autopilot-$computerName.txt"
-                        ContentBytes  = $attachmentEncoded
-                    }
-                )
+                attachments  = @()  # Initialize as empty array
                 toRecipients = @()  # Initialize as empty array
             }
             saveToSentItems = $false
+        }
+        
+        # Add each attachment to the attachments array
+        foreach ($attachmentPath in $attachmentPaths) {
+            $attachmentBytes = [System.IO.File]::ReadAllBytes($attachmentPath)
+            $attachmentEncoded = [System.Convert]::ToBase64String($attachmentBytes)
+            $attachmentName = [System.IO.Path]::GetFileName($attachmentPath)
+            
+            $message.message.attachments += @{
+                "@odata.type" = "#microsoft.graph.fileAttachment"
+                Name          = $attachmentName
+                ContentBytes  = $attachmentEncoded
+            }
         }
         
         # Add each recipient to the toRecipients array
