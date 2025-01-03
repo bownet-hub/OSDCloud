@@ -83,12 +83,15 @@ Function Install-RingCentral {
 .SYNOPSIS
     Installs the WatchGuard SSL VPN application.
 .DESCRIPTION
-    Uses the included installer to install the WatchGuard SSL VPN application.
+    Downloads and installs the WatchGuard SSL VPN application. URL will need to be updated with each new version.
 #>
 Function Install-WatchGuard {
     Write-Host "Installing $appName"
     $installer = Get-ChildItem -Path ".\" -Recurse -File -Include "*.exe"
-    Write-Host "Use included installer $installer"
+    $installerPath = "$defaultPath\$appName.exe"
+    $installer = "$defaultPath\$appName.exe"
+    $url = "https://cdn.watchguard.com/SoftwareCenter/Files/MUVPN_SSL/12_11/WG-MVPN-SSL_12_11.exe"
+    Write-Host "URL to download the installer: $url"
 
     $arguments = @(
         "/SILENT"
@@ -96,16 +99,18 @@ Function Install-WatchGuard {
         "/TASKS=desktopicon"
     )
 
-    $certFile = Get-ChildItem -Path ".\" -Recurse -File -Include "*.cer"
-    if ($null -ne $certFile) {
-        if (Test-Path "$certFile") {
-            Write-Host "Install included certificate"
-            Import-Certificate -FilePath $certFile -CertStoreLocation Cert:\LocalMachine\TrustedPublisher
-            Install-Application -installer $installer -arguments $arguments
-        }
-    } else {
-        Write-Host "Certificate not present"
-    }
+    #$certFile = Get-ChildItem -Path ".\" -Recurse -File -Include "*.cer"
+    #if ($null -ne $certFile) {
+    #    if (Test-Path "$certFile") {
+    #        Write-Host "Install included certificate"
+    #        Import-Certificate -FilePath $certFile -CertStoreLocation Cert:\LocalMachine\TrustedPublisher
+    #        Install-Application -installer $installer -arguments $arguments
+    #    }
+    #} else {
+    #    Write-Host "Certificate not present"
+    #}
+    
+    Install-Application -url $url -installerPath $installerPath -installer $installer -arguments $arguments
 }
 
 <#
