@@ -15,15 +15,18 @@ function Get-AutopilotResults {
     Write-Host "$(Get-Date -Format $dtFormat)"
 
     # Get OSDCloud logs to attach
-    $logOSDCloud = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
+    $logOSDSetupComplete = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
         Where-Object { $_.Name -like "SetupComplete.log" }
+        
+    $logOSDCloud = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
+        Where-Object { $_.Name -like "*OSDCloud.log" }
 
     # Get Lenovo ThinInstaller logs to attach
     $logLenovo = Get-ChildItem -Path "C:\Program Files (x86)\Lenovo\ThinInstaller\logs" -Recurse -File | 
         Where-Object { $_.Name -like "*Installation.log" }
 
     # Combine all log paths into an array
-    $attachmentPaths = @($logPath, $logOSDCloud.FullName, $logLenovo.FullName)
+    $attachmentPaths = @($logPath, $logOSDCloud.FullName, $logOSDSetupComplete.FullName, $logLenovo.FullName)
 
     Get-AutopilotDiagnosticInfo -Online -Tenant $tenant -AppId $appId -AppSecret $appSecret
 
