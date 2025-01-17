@@ -1,3 +1,14 @@
+function Write-Log {
+    param (
+        [Parameter(Mandatory = $true)] [string] $message,
+        [Parameter(Mandatory = $false)] [string] $logFile = "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\AutopilotDiagnosticsLog.log",
+        [Parameter(Mandatory = $false)] [string] $level = "INFO" # Default log level is INFO
+    )
+    $timestamp = Get-Date -Format 'dd-MMM-yyyy HH:mm:ss'
+    $logMessage = "$timestamp - [$level] - $message"
+    Add-Content -Path $logFile -Value $logMessage
+}
+
 function Get-AutopilotResults {
     param(
         [Parameter(Mandatory = $true)] [string] $appId,
@@ -13,24 +24,44 @@ function Get-AutopilotResults {
     Start-Transcript -Path $logPath
     $dtFormat = 'dd-MMM-yyyy HH:mm:ss'
     Write-Host "$(Get-Date -Format $dtFormat)"
+    Write-Log -message "Script execution started"
 
-    # Get OSDCloud logs to attach
-    $logOSDSetupComplete = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
-        Where-Object { $_.Name -like "SetupComplete.log" }
-        
-    $logOSDCloud = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
-        Where-Object { $_.Name -like "*OSDCloud.log" }
+    try {
+        # Get OSDCloud logs to attach
+        $logOSDSetupComplete = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
+            Where-Object { $_.Name -like "SetupComplete.log" }
+            
+        $logOSDCloud = Get-ChildItem -Path "C:\OSDCloud\Logs" -Recurse -File | 
+            Where-Object { $_.Name -like "*OSDCloud.log" }
 
-    # Get Lenovo ThinInstaller logs to attach
-    $logLenovo = Get-ChildItem -Path "C:\Program Files (x86)\Lenovo\ThinInstaller\logs" -Recurse -File | 
-        Where-Object { $_.Name -like "*Installation.log" }
+        # Get Lenovo ThinInstaller logs to attach
+        $logLenovo = Get-ChildItem -Path "C:\Program Files (x86)\Lenovo\ThinInstaller\logs" -Recurse -File | 
+            Where-Object { $_.Name -like "*Installation.log" }
 
-    # Combine all log paths into an array
-    $attachmentPaths = @($logPath, $logOSDCloud.FullName, $logOSDSetupComplete.FullName, $logLenovo.FullName)
+        # Combine all log paths into an array
+        $attachmentPaths = @()
+        if ($logOSDSetupComplete) { $attachmentPaths += $logOSDSetupComplete.FullName }
+        if ($logOSDCloud) { $attachmentPaths += $logOSDCloud.FullName }
+        if ($logLenovo) { $attachmentPaths += $logLenovo.FullName }
+        $attachmentPaths += $logPath
 
-    Get-AutopilotDiagnosticInfo -Online -Tenant $tenant -AppId $appId -AppSecret $appSecret
+        Get-AutopilotDiagnosticInfo -Online -Tenant $tenant -AppId $appId -AppSecret $appSecret
 
-    Stop-Transcript
+        Stop-Transcript
+        Write-Log -message "Autopilot Diagnostic Info gathered and written to log file"
+    }
+    catch [System.IO.IOException] {
+        Write-Log -message "IO Error during script execution: $_" -level "ERROR"
+        throw $_
+    }
+    catch [System.UnauthorizedAccessException] {
+        Write-Log -message "Unauthorized Access Error during script execution: $_" -level "ERROR"
+        throw $_
+    }
+    catch {
+        Write-Log -message "General Error during script execution: $_" -level "ERROR"
+        throw $_
+    }
 
     # Remove the header containing sensitive information from the transcript file before emailing
     (Get-Content $logPath | Select-Object -Skip 18) | Set-Content $logPath
@@ -52,6 +83,8 @@ function Send-Email {
     )
     
     try {
+        Write-Log -message "Starting email send process"
+
         $computerName = (Get-ComputerInfo).csname
         $biosSerialNumber = Get-MyBiosSerialNumber
         $computerManufacturer = Get-MyComputerManufacturer
@@ -67,7 +100,8 @@ function Send-Email {
         
         $response = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenant/oauth2/v2.0/token" -Method Post -ContentType "application/x-www-form-urlencoded" -Body $body
         $accessToken = $response.access_token
-        
+        Write-Log -message "Access token obtained"
+
         # Create the message
         $message = @{
             message         = @{
@@ -88,17 +122,22 @@ function Send-Email {
         
         # Add each attachment to the attachments array
         foreach ($attachmentPath in $attachmentPaths) {
-            $attachmentBytes = [System.IO.File]::ReadAllBytes($attachmentPath)
-            $attachmentEncoded = [System.Convert]::ToBase64String($attachmentBytes)
-            $attachmentName = [System.IO.Path]::GetFileName($attachmentPath)
-            
-            $message.message.attachments += @{
-                "@odata.type" = "#microsoft.graph.fileAttachment"
-                Name          = $attachmentName
-                ContentBytes  = $attachmentEncoded
+            if (Test-Path $attachmentPath) {
+                $attachmentBytes = [System.IO.File]::ReadAllBytes($attachmentPath)
+                $attachmentEncoded = [System.Convert]::ToBase64String($attachmentBytes)
+                $attachmentName = [System.IO.Path]::GetFileName($attachmentPath)
+                
+                $message.message.attachments += @{
+                    "@odata.type" = "#microsoft.graph.fileAttachment"
+                    Name          = $attachmentName
+                    ContentBytes  = $attachmentEncoded
+                }
+            } else {
+                Write-Log -message "Attachment file not found: $attachmentPath" -level "ERROR"
             }
         }
-        
+        Write-Log -message "Attachments added to the message"
+
         # Add each recipient to the toRecipients array
         foreach ($recipient in $toRecipients) {
             $message.message.toRecipients += @{
@@ -107,17 +146,27 @@ function Send-Email {
                 }
             }
         }
-        
+        Write-Log -message "Recipients added to the message"
+
         # Send the email
         Invoke-RestMethod -Uri "https://graph.microsoft.com/v1.0/users/$from/sendMail" -Method Post -Headers @{
             Authorization  = "Bearer $accessToken"
             "Content-Type" = "application/json"
         } -Body ($message | ConvertTo-Json -Depth 10)
+        Write-Log -message "Email sent successfully"
+    }
+    catch [System.Net.WebException] {
+        Write-Log -message "Web Error during email send process: $_" -level "ERROR"
+        Write-Log -message "Status Code: $($_.Response.StatusCode)" -level "ERROR"
+        Write-Log -message "Status Description: $($_.Response.StatusDescription)" -level "ERROR"
+        throw $_
     }
     catch {
-        Write-Error "Failed to send email: $_"
+        Write-Log -message "General Error during email send process: $_" -level "ERROR"
+        throw $_
     }
 }
+
 function Get-AutopilotDiagnosticInfo {
     <#PSScriptInfo
  
