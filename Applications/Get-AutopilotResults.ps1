@@ -372,31 +372,30 @@ Shows the policy details as recorded in the NodeCache registry keys, in the orde
         # Functions
         #------------------------
 
-    
         Function Connect-ToGraph {
             <#
-.SYNOPSIS
-Authenticates to the Graph API via the Microsoft.Graph.Authentication module.
+            .SYNOPSIS
+            Authenticates to the Graph API via the Microsoft.Graph.Authentication module.
   
-.DESCRIPTION
-The Connect-ToGraph cmdlet is a wrapper cmdlet that helps authenticate to the Intune Graph API using the Microsoft.Graph.Authentication module. It leverages an Azure AD app ID and app secret for authentication or user-based auth.
+            .DESCRIPTION
+            The Connect-ToGraph cmdlet is a wrapper cmdlet that helps authenticate to the Intune Graph API using the Microsoft.Graph.Authentication module. It leverages an Azure AD app ID and app secret for authentication or user-based auth.
   
-.PARAMETER Tenant
-Specifies the tenant (e.g. contoso.onmicrosoft.com) to which to authenticate.
+            .PARAMETER Tenant
+            Specifies the tenant (e.g. contoso.onmicrosoft.com) to which to authenticate.
   
-.PARAMETER AppId
-Specifies the Azure AD app ID (GUID) for the application that will be used to authenticate.
+            .PARAMETER AppId
+            Specifies the Azure AD app ID (GUID) for the application that will be used to authenticate.
   
-.PARAMETER AppSecret
-Specifies the Azure AD app secret corresponding to the app ID that will be used to authenticate.
+            .PARAMETER AppSecret
+            Specifies the Azure AD app secret corresponding to the app ID that will be used to authenticate.
  
-.PARAMETER Scopes
-Specifies the user scopes for interactive authentication.
+            .PARAMETER Scopes
+            Specifies the user scopes for interactive authentication.
   
-.EXAMPLE
-Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
+            .EXAMPLE
+            Connect-ToGraph -TenantId $tenantID -AppId $app -AppSecret $secret
   
--#>
+            -#>
             [cmdletbinding()]
             param
             (
