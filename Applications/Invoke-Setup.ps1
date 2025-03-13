@@ -54,6 +54,7 @@ Function Invoke-Setup {
             Write-Host "$appName is not a valid application"
         }
     }
+    Stop-Transcript
 }
 
 
