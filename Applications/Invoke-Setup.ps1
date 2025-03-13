@@ -56,12 +56,7 @@ Function Invoke-Setup {
     }
 }
 
-<#
-.SYNOPSIS
-    Installs the RingCentral application.
-.DESCRIPTION
-    Downloads the RingCentral installer and installs the application.
-#>
+
 Function Install-RingCentral {
     Write-Host "Installing $appName"
     $installerPath = "$defaultPath\$appName.msi"
@@ -79,12 +74,7 @@ Function Install-RingCentral {
     Install-Application -url $url -installerPath $installerPath -installer $installer -arguments $arguments
 }
 
-<#
-.SYNOPSIS
-    Installs the WatchGuard SSL VPN application.
-.DESCRIPTION
-    Downloads and installs the WatchGuard SSL VPN application. URL will need to be updated with each new version.
-#>
+
 Function Install-WatchGuard {
     Write-Host "Installing $appName"
     $installer = Get-ChildItem -Path ".\" -Recurse -File -Include "*.exe"
@@ -169,12 +159,7 @@ Function Install-Application {
     }
 }
 
-<#
-.SYNOPSIS
-    Uninstalls the WatchGuard SSL VPN application.
-.DESCRIPTION
-    Uses the included uninstaller to uninstall the WatchGuard SSL VPN application.
-#>
+
 Function Uninstall-WatchGuard {
     Write-Host "Uninstalling $appName"
     $installer = "C:\Program Files (x86)\WatchGuard\WatchGuard Mobile VPN with SSL\unins000.EXE"
