@@ -33,14 +33,18 @@ if (-not $SkipAdminCheck -and -not ([Security.Principal.WindowsPrincipal] [Secur
     Write-Warning "Script not run as administrator. Relaunching with elevated privileges..."
     Start-Sleep -Seconds 3
 
-    # Use double quotes for string interpolation and escape quotes properly
+    # Prepare the elevated command
     $command = @"
     try { 
-        \$ScriptContent = irm '$ThisScriptUrl'
+        Write-Host 'Attempting to download script from URL...'
+        \$ScriptContent = irm '$ThisScriptUrl' -ErrorAction Stop
+        
         if (-not \$ScriptContent) {
-            Write-Host 'Error: Script download failed or returned empty content.'
+            Write-Host 'Error: Script content is empty.'
             Read-Host 'Press Enter to exit...'
         } else {
+            Write-Host 'Script downloaded successfully.'
+            Write-Host 'Executing downloaded script...'
             iex \$ScriptContent
         }
     } catch { 
@@ -53,6 +57,7 @@ if (-not $SkipAdminCheck -and -not ([Security.Principal.WindowsPrincipal] [Secur
     }
 "@
 
+    # Launch PowerShell elevated
     Start-Process powershell.exe -ArgumentList "-NoProfile", "-ExecutionPolicy Bypass", "-Command $command" -Verb RunAs
     Exit
 }
