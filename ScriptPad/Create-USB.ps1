@@ -59,7 +59,7 @@ if (-not $SkipAdminCheck -and -not ([Security.Principal.WindowsPrincipal] [Secur
 
     # Launch PowerShell elevated
     Start-Process powershell.exe -ArgumentList "-NoProfile", "-ExecutionPolicy Bypass", "-Command $command" -Verb RunAs
-    Exit
+    
 }
 #endregion
 
