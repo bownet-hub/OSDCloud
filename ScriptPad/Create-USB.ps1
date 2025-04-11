@@ -31,7 +31,7 @@ $ThisScriptUrl = 'https://raw.githubusercontent.com/bownet-hub/OSDCloud/refs/hea
 if (-not $SkipAdminCheck -and -not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Warning "Script not run as administrator. Relaunching with elevated privileges..."
     Start-Sleep -Seconds 3
-    Start-Process powershell.exe -ArgumentList "-NoProfile", "-ExecutionPolicy Bypass", "-Command `"try { iex (irm '$ScriptUrl') } catch { Write-Host 'ERROR:'; Write-Host \$_; Read-Host 'Press Enter to exit...' } finally { Read-Host 'Done. Press Enter to exit.' }`"" -Verb RunAs
+    Start-Process powershell.exe -ArgumentList "-NoProfile", "-ExecutionPolicy Bypass", "-Command `"try { iex (irm '$ScriptUrl') } catch { Write-Host 'ERROR:'; Write-Host \$_.Exception.Message; Write-Host \$_.ScriptStackTrace; Read-Host 'Press Enter to exit...' } finally { Read-Host 'Done. Press Enter to exit.' }`"" -Verb RunAs
     Exit
 }
 #endregion
