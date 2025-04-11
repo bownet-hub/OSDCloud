@@ -28,25 +28,33 @@ $ScriptStartTime = Get-Date
 
 #region CheckAdmin
 $ThisScriptUrl = 'https://raw.githubusercontent.com/bownet-hub/OSDCloud/refs/heads/main/ScriptPad/Create-USB.ps1'
+
 if (-not $SkipAdminCheck -and -not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Warning "Script not run as administrator. Relaunching with elevated privileges..."
     Start-Sleep -Seconds 3
-    Start-Process powershell.exe -ArgumentList "-NoProfile", "-ExecutionPolicy Bypass", "-Command `"try { 
-    $ScriptContent = irm '$ScriptUrl'
-    if (-not $ScriptContent) {
-        Write-Host 'Error: Script download failed or returned empty content.'
+
+    # Use double quotes for string interpolation and escape quotes properly
+    $command = @"
+    try { 
+        \$ScriptContent = irm '$ThisScriptUrl'
+        if (-not \$ScriptContent) {
+            Write-Host 'Error: Script download failed or returned empty content.'
+            Read-Host 'Press Enter to exit...'
+        } else {
+            iex \$ScriptContent
+        }
+    } catch { 
+        Write-Host 'ERROR:'
+        Write-Host \$_.Exception.Message
+        Write-Host \$_.ScriptStackTrace
         Read-Host 'Press Enter to exit...'
-    } else {
-        iex $ScriptContent
+    } finally { 
+        Read-Host 'Done. Press Enter to exit.' 
     }
-} catch { 
-    Write-Host 'ERROR:'
-    Write-Host \$_.Exception.Message
-    Write-Host \$_.ScriptStackTrace
-    Read-Host 'Press Enter to exit...'
-} finally { 
-    Read-Host 'Done. Press Enter to exit.' 
-}`"" -Verb RunAs
+"@
+
+    Start-Process powershell.exe -ArgumentList "-NoProfile", "-ExecutionPolicy Bypass", "-Command $command" -Verb RunAs
+    Exit
 }
 #endregion
 
