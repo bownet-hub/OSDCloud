@@ -47,7 +47,6 @@ if (-not $SkipAdminCheck -and -not ([Security.Principal.WindowsPrincipal] [Secur
 } finally { 
     Read-Host 'Done. Press Enter to exit.' 
 }`"" -Verb RunAs
-    Exit
 }
 #endregion
 
