@@ -119,16 +119,15 @@ Install-ComponentIfMissing -DisplayNamePattern "Windows Assessment and Deploymen
 #endregion
 
 #region OSDCloud Setup
-Write-Host "Updating OSD module..." -ForegroundColor Cyan
-Set-ExecutionPolicy Bypass -Force
-if (-not (Get-InstalledModule -Name "OSD" -ErrorAction SilentlyContinue)) {
-    Write-Host "OSD module not found. Installing..." -ForegroundColor Yellow
-    Install-Module -Name OSD -Force
-}
-else {
+$module = Import-Module OSD -PassThru -ErrorAction Ignore
+if (-not $module) {
+	Write-Host "Installing OSD module..." -ForegroundColor Yellow
+	Install-Module OSD -Force | Out-Null
+ else {
+    Write-Host "Updating OSD module..." -ForegroundColor Cyan
     Update-Module -Name OSD -Force
 }
-Import-Module -Name OSD -Force
+Import-Module OSD -Force
 
 $TemplatePath = "C:\ProgramData\OSDCloud\Templates\WinRE"
 if (-not (Test-Path $TemplatePath)) {
